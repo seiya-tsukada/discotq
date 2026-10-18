@@ -1,0 +1,8 @@
+{
+  "name": "DiscoTQ - 新しい発見があるショート広告プラットフォーム",
+  "description": "新しい発見があるショート広告プラットフォーム。厳選ブランドのプロモーション視聴・体験リワード、公式LPチェック、広告枠出店機能を搭載。",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
