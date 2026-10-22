@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { GiftItem } from '../types';
+import { COPY_FEEDBACK_DURATION_MS } from '../constants/timing';
 
 export const PointStoreModal: React.FC = () => {
   const { 
@@ -50,7 +51,7 @@ export const PointStoreModal: React.FC = () => {
     navigator.clipboard.writeText(code);
     setCopiedCode(true);
     showNotification('デジタルコードをコピーしました', undefined, 'success');
-    setTimeout(() => setCopiedCode(false), 3000);
+    setTimeout(() => setCopiedCode(false), COPY_FEEDBACK_DURATION_MS);
   };
 
   return (

@@ -1,4 +1,4 @@
-import { AdItem, GiftItem, AdPlan, CreatorAccount } from '../types';
+import { AdItem, GiftItem, CreatorAccount, UserComment } from '../types';
 
 export const MOCK_CREATORS: CreatorAccount[] = [
   {
@@ -444,54 +444,7 @@ export const GIFT_ITEMS: GiftItem[] = [
   },
 ];
 
-export const AD_PLANS: AdPlan[] = [
-  {
-    id: 'plan-starter',
-    name: 'スタンダード配信枠',
-    tagline: 'テストマーケティングや初期プロモーションに最適な基本プラン',
-    pricePerView: 8,
-    minBudget: 15000,
-    features: [
-      '通常インフィード動画広告配信',
-      '完全視聴保証（5秒以上のエンゲージメント確認）',
-      'アプリ内公式LP掲載・クーポン発行',
-      'リアルタイムアナリティクスダッシュボード',
-      '最低出稿予算: ¥15,000〜',
-    ],
-  },
-  {
-    id: 'plan-boost',
-    name: 'プレミアムブースト枠',
-    tagline: '視聴者への正規リワード還元と優先インプレッションで認知度とCVRを最大化',
-    pricePerView: 15,
-    minBudget: 50000,
-    recommended: true,
-    features: [
-      'フィード上位優先ローテーション配信',
-      'リワード還元プログラム適用（高視聴完了率88%以上）',
-      'アプリ内リッチLP掲載＆バナー強調',
-      'DiscoTQ公式 認証済み（Verified）バッジ付与',
-      '詳細CTR・エンゲージメントレポート',
-      '最低出稿予算: ¥50,000〜',
-    ],
-  },
-  {
-    id: 'plan-premium',
-    name: 'エンタープライズ・スポンサー枠',
-    tagline: '大規模ブランドキャンペーン・新製品発表に特化した最上位プロモーション',
-    pricePerView: 25,
-    minBudget: 150000,
-    features: [
-      '全アクティブユーザーへの優先リーチ',
-      'LP熟読インセンティブプログラム連携',
-      'クリエイティブA/Bテスト複数配信対応',
-      '専任アカウントマネージャーによる配信最適化支援',
-      '最低出稿予算: ¥150,000〜',
-    ],
-  },
-];
-
-export const INITIAL_COMMENTS: Record<string, { id: string; adId: string; userName: string; userAvatar: string; comment: string; likes: number; timeAgo: string; isSponsorReply?: boolean }[]> = {
+export const INITIAL_COMMENTS: Record<string, UserComment[]> = {
   'ad-1': [
     { id: 'c1', adId: 'ad-1', userName: '美容ライター M.N.', userAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=60&auto=format&fit=crop&q=80', comment: '成分構成が非常に堅実で、無香料なのも使いやすいですね。LPの解説が分かりやすかったです。', likes: 24, timeAgo: '2時間前' },
     { id: 'c2', adId: 'ad-1', userName: 'BOTANICAL LAB 公式', userAvatar: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=60&auto=format&fit=crop&q=80', comment: 'ご覧いただきありがとうございます。国内の自社提携ラボにて徹底した品質管理を行っております。', likes: 35, timeAgo: '1時間前', isSponsorReply: true },

@@ -1,3 +1,9 @@
+export type AdCategory = 'コスメ・美容' | 'ガジェット・家電' | 'グルメ・食品' | 'アプリ・ゲーム' | 'ライフスタイル・旅行' | 'ファッション';
+
+export type UserLevel = 'ブロンズ' | 'シルバー' | 'ゴールド' | 'VIP';
+
+export type NotificationType = 'success' | 'info' | 'warning';
+
 export interface AdLandingPage {
   heroImage: string;
   subTitle: string;
@@ -37,7 +43,7 @@ export interface AdItem {
   tags: string[];
   videoUrl: string;
   posterUrl: string;
-  category: 'コスメ・美容' | 'ガジェット・家電' | 'グルメ・食品' | 'アプリ・ゲーム' | 'ライフスタイル・旅行' | 'ファッション';
+  category: AdCategory;
   ctaText: string;
   ctaType: 'primary' | 'secondary' | 'accent';
   rewardPoints: number;
@@ -99,17 +105,19 @@ export interface UserAccount {
   points: number;
   totalEarnedPoints: number;
   unclaimedGuestPoints: number;
-  level: 'ブロンズ' | 'シルバー' | 'ゴールド' | 'VIP';
+  level: UserLevel;
   watchedAdIds: string[];
   likedAdIds: string[];
   bookmarkedAdIds: string[];
-  pointHistory: {
-    id: string;
-    title: string;
-    points: number;
-    date: string;
-    type: 'watch' | 'lp_read' | 'exchange' | 'bonus';
-  }[];
+  pointHistory: PointHistoryEntry[];
+}
+
+export interface PointHistoryEntry {
+  id: string;
+  title: string;
+  points: number;
+  date: string;
+  type: 'watch' | 'lp_read' | 'exchange' | 'bonus';
 }
 
 export interface GiftItem {
@@ -122,14 +130,4 @@ export interface GiftItem {
   stock: number;
   popular?: boolean;
   valueDescription: string;
-}
-
-export interface AdPlan {
-  id: string;
-  name: string;
-  tagline: string;
-  pricePerView: number;
-  minBudget: number;
-  features: string[];
-  recommended?: boolean;
 }

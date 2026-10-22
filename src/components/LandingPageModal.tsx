@@ -16,6 +16,9 @@ import {
   BadgeCheck
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { COPY_FEEDBACK_DURATION_MS } from '../constants/timing';
+import { LP_READ_SCROLL_THRESHOLD_PX } from '../constants/rewards';
+import { DEFAULT_COUPON_CODE } from '../constants/ads';
 
 export const LandingPageModal: React.FC = () => {
   const { activeLpAd, closeLpModal, claimLpReadReward, user, showNotification } = useApp();
@@ -32,7 +35,7 @@ export const LandingPageModal: React.FC = () => {
   const handleScroll = () => {
     if (!contentRef.current || hasScrolledToBottom || isLpReadBefore) return;
     const { scrollTop, scrollHeight, clientHeight } = contentRef.current;
-    if (scrollTop + clientHeight >= scrollHeight - 80) {
+    if (scrollTop + clientHeight >= scrollHeight - LP_READ_SCROLL_THRESHOLD_PX) {
       setHasScrolledToBottom(true);
       claimLpReadReward(activeLpAd.id);
     }
@@ -42,7 +45,7 @@ export const LandingPageModal: React.FC = () => {
     navigator.clipboard.writeText(code);
     setCopiedCoupon(true);
     showNotification(`優待コード「${code}」をコピーしました`, undefined, 'success');
-    setTimeout(() => setCopiedCoupon(false), 3000);
+    setTimeout(() => setCopiedCoupon(false), COPY_FEEDBACK_DURATION_MS);
   };
 
   const handleCtaClick = () => {
@@ -263,7 +266,7 @@ export const LandingPageModal: React.FC = () => {
         {/* Sticky Action Footer */}
         <div className="p-3.5 bg-slate-950 border-t border-slate-800 flex items-center gap-3 shrink-0">
           <button
-            onClick={() => copyCouponCode(landingPage.specialOffer?.couponCode || 'ADTOK2026')}
+            onClick={() => copyCouponCode(landingPage.specialOffer?.couponCode || DEFAULT_COUPON_CODE)}
             className="px-3.5 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-slate-300 font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
             title="コードコピー"
           >

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Copy, Check, Share2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { SHARE_COPY_FEEDBACK_DURATION_MS } from '../constants/timing';
 
 export const ShareModal: React.FC = () => {
   const { isShareModalOpen, setIsShareModalOpen, ads, currentAdIndex, showNotification } = useApp();
@@ -15,7 +16,7 @@ export const ShareModal: React.FC = () => {
     navigator.clipboard.writeText(shareUrl);
     setCopied(true);
     showNotification('共有リンクをクリップボードにコピーしました', undefined, 'success');
-    setTimeout(() => setCopied(false), 2500);
+    setTimeout(() => setCopied(false), SHARE_COPY_FEEDBACK_DURATION_MS);
   };
 
   const handleSnsShare = (platform: string) => {
