@@ -29,12 +29,7 @@ export const CreatorAdList: React.FC<CreatorAdListProps> = ({ ads, onUploadClick
 
       <div className="grid gap-3">
         {ads.map((ad) => (
-          <CreatorAdListItem
-            key={ad.id}
-            ad={ad}
-            onToggleStatus={onToggleStatus}
-            onDelete={onDelete}
-          />
+          <CreatorAdListItem key={ad.id} ad={ad} onToggleStatus={onToggleStatus} onDelete={onDelete} />
         ))}
       </div>
     </div>

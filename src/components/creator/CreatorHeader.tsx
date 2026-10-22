@@ -31,9 +31,7 @@ export const CreatorHeader: React.FC<CreatorHeaderProps> = ({ activeTab, onTabCh
         <button
           onClick={() => onTabChange('dashboard')}
           className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-            activeTab === 'dashboard'
-              ? 'bg-blue-600 text-white shadow-sm'
-              : 'text-slate-400 hover:text-white'
+            activeTab === 'dashboard' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
           }`}
         >
           ダッシュボード & 改善
@@ -41,9 +39,7 @@ export const CreatorHeader: React.FC<CreatorHeaderProps> = ({ activeTab, onTabCh
         <button
           onClick={() => onTabChange('upload')}
           className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5 ${
-            activeTab === 'upload'
-              ? 'bg-blue-600 text-white shadow-sm'
-              : 'text-slate-400 hover:text-white'
+            activeTab === 'upload' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
           }`}
         >
           <Upload className="w-3.5 h-3.5" />

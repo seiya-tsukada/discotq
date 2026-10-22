@@ -9,7 +9,7 @@ interface GuestClaimPromptProps {
 // Guest Reward Floating Banner (Modern Prompt)
 export const GuestClaimPrompt: React.FC<GuestClaimPromptProps> = ({ rewardPoints, onClaim }) => {
   return (
-    <div 
+    <div
       className="absolute top-28 right-3.5 left-3.5 z-25 pointer-events-auto animate-fadeIn"
       onClick={(e) => e.stopPropagation()}
     >

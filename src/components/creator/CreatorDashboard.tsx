@@ -14,7 +14,6 @@ interface CreatorDashboardProps {
 export const CreatorDashboard: React.FC<CreatorDashboardProps> = ({ ads, onUploadClick, onToggleStatus, onDelete }) => {
   return (
     <div className="space-y-6">
-
       {/* KPI Summary */}
       <CreatorKpiSummary ads={ads} />
 
@@ -22,13 +21,7 @@ export const CreatorDashboard: React.FC<CreatorDashboardProps> = ({ ads, onUploa
       <CreativeImprovementPanel ads={ads} onUploadClick={onUploadClick} />
 
       {/* Campaign Management List */}
-      <CreatorAdList
-        ads={ads}
-        onUploadClick={onUploadClick}
-        onToggleStatus={onToggleStatus}
-        onDelete={onDelete}
-      />
-
+      <CreatorAdList ads={ads} onUploadClick={onUploadClick} onToggleStatus={onToggleStatus} onDelete={onDelete} />
     </div>
   );
 };

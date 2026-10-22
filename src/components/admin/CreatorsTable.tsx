@@ -43,7 +43,9 @@ export const CreatorsTable: React.FC<CreatorsTableProps> = ({ creators }) => {
                     />
                     <div>
                       <p className="font-bold text-white">{c.companyName}</p>
-                      <p className="text-[11px] text-slate-400">{c.name} ({c.email})</p>
+                      <p className="text-[11px] text-slate-400">
+                        {c.name} ({c.email})
+                      </p>
                     </div>
                   </div>
                 </td>
@@ -52,18 +54,10 @@ export const CreatorsTable: React.FC<CreatorsTableProps> = ({ creators }) => {
                     {c.tier}
                   </span>
                 </td>
-                <td className="p-3 font-semibold text-white">
-                  {c.totalAdsCreated} 本
-                </td>
-                <td className="p-3 font-bold text-slate-200">
-                  ¥{c.totalBudgetSpent.toLocaleString()}
-                </td>
-                <td className="p-3 font-semibold text-emerald-400">
-                  {c.averageCtr}%
-                </td>
-                <td className="p-3 font-semibold text-blue-400">
-                  {c.averageViewRate}%
-                </td>
+                <td className="p-3 font-semibold text-white">{c.totalAdsCreated} 本</td>
+                <td className="p-3 font-bold text-slate-200">¥{c.totalBudgetSpent.toLocaleString()}</td>
+                <td className="p-3 font-semibold text-emerald-400">{c.averageCtr}%</td>
+                <td className="p-3 font-semibold text-blue-400">{c.averageViewRate}%</td>
                 <td className="p-3">
                   <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1 w-max">
                     <BadgeCheck className="w-3 h-3" />

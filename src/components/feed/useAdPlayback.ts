@@ -44,7 +44,7 @@ export const useAdPlayback = ({
       setVideoError(false);
       /* eslint-enable react-hooks/set-state-in-effect */
       videoRef.current.currentTime = 0;
-      
+
       const playPromise = videoRef.current.play();
       if (playPromise !== undefined) {
         playPromise

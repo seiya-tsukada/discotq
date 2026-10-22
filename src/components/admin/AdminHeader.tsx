@@ -41,9 +41,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         <button
           onClick={() => onTabChange('moderation')}
           className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5 ${
-            activeTab === 'moderation'
-              ? 'bg-blue-600 text-white shadow-sm'
-              : 'text-slate-400 hover:text-white'
+            activeTab === 'moderation' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
           }`}
         >
           <Clock className="w-3.5 h-3.5" />
@@ -57,9 +55,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         <button
           onClick={() => onTabChange('creators')}
           className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5 ${
-            activeTab === 'creators'
-              ? 'bg-blue-600 text-white shadow-sm'
-              : 'text-slate-400 hover:text-white'
+            activeTab === 'creators' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
           }`}
         >
           <Users className="w-3.5 h-3.5" />
@@ -68,9 +64,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         <button
           onClick={() => onTabChange('allAds')}
           className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5 ${
-            activeTab === 'allAds'
-              ? 'bg-blue-600 text-white shadow-sm'
-              : 'text-slate-400 hover:text-white'
+            activeTab === 'allAds' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
           }`}
         >
           <Layers className="w-3.5 h-3.5" />

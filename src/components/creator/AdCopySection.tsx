@@ -45,9 +45,7 @@ export const AdCopySection: React.FC<AdCopySectionProps> = ({ form }) => {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-slate-400 mb-1">
-            カテゴリ
-          </label>
+          <label className="block text-xs font-medium text-slate-400 mb-1">カテゴリ</label>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value as AdCategory)}
@@ -78,9 +76,7 @@ export const AdCopySection: React.FC<AdCopySectionProps> = ({ form }) => {
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-slate-400 mb-1">
-          詳細説明文
-        </label>
+        <label className="block text-xs font-medium text-slate-400 mb-1">詳細説明文</label>
         <textarea
           rows={2}
           placeholder="商品の特徴やキャンペーン概要を入力..."
@@ -92,9 +88,7 @@ export const AdCopySection: React.FC<AdCopySectionProps> = ({ form }) => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-medium text-slate-400 mb-1">
-            CTAボタンテキスト
-          </label>
+          <label className="block text-xs font-medium text-slate-400 mb-1">CTAボタンテキスト</label>
           <input
             type="text"
             value={ctaText}
@@ -103,9 +97,7 @@ export const AdCopySection: React.FC<AdCopySectionProps> = ({ form }) => {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-slate-400 mb-1">
-            ハッシュタグ
-          </label>
+          <label className="block text-xs font-medium text-slate-400 mb-1">ハッシュタグ</label>
           <input
             type="text"
             value={tags}

@@ -19,7 +19,6 @@ export const CreatorPortal: React.FC = () => {
 
       {/* Main Container */}
       <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
-
         {/* Tab 1: Dashboard & Improvement Center */}
         {activeTab === 'dashboard' && (
           <CreatorDashboard
@@ -31,10 +30,7 @@ export const CreatorPortal: React.FC = () => {
         )}
 
         {/* Tab 2: Upload / Creative Studio Form */}
-        {activeTab === 'upload' && (
-          <AdUploadForm form={form} onCancel={() => setActiveTab('dashboard')} />
-        )}
-
+        {activeTab === 'upload' && <AdUploadForm form={form} onCancel={() => setActiveTab('dashboard')} />}
       </main>
     </div>
   );

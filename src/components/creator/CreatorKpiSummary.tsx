@@ -32,7 +32,9 @@ export const CreatorKpiSummary: React.FC<CreatorKpiSummaryProps> = ({ ads }) => 
       <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
         <span className="text-xs text-slate-400 font-medium">登録済みクリエイティブ</span>
         <p className="text-2xl font-bold text-emerald-400 mt-1">{ads.length} 本</p>
-        <span className="text-[10px] text-slate-400 font-medium mt-1 inline-block">承認済み: {ads.filter(a => a.reviewStatus === 'approved').length} 本</span>
+        <span className="text-[10px] text-slate-400 font-medium mt-1 inline-block">
+          承認済み: {ads.filter((a) => a.reviewStatus === 'approved').length} 本
+        </span>
       </div>
     </div>
   );

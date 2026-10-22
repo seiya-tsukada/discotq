@@ -11,16 +11,10 @@ interface ActionRailProps {
 
 // Right Sidebar: Interaction Actions
 export const ActionRail: React.FC<ActionRailProps> = ({ ad, isLiked, isBookmarked }) => {
-  const { 
-    toggleLikeAd, 
-    toggleBookmarkAd, 
-    openLpModal, 
-    setIsCommentsModalOpen, 
-    setIsShareModalOpen 
-  } = useApp();
+  const { toggleLikeAd, toggleBookmarkAd, openLpModal, setIsCommentsModalOpen, setIsShareModalOpen } = useApp();
 
   return (
-    <div 
+    <div
       className="absolute right-3.5 bottom-24 z-20 flex flex-col items-center gap-3 pointer-events-auto"
       onClick={(e) => e.stopPropagation()}
     >
@@ -44,16 +38,14 @@ export const ActionRail: React.FC<ActionRailProps> = ({ ad, isLiked, isBookmarke
         <button
           onClick={() => toggleLikeAd(ad.id)}
           className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all ${
-            isLiked 
-              ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' 
+            isLiked
+              ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
               : 'bg-slate-900/80 backdrop-blur-sm text-slate-300 hover:text-white border border-slate-800 hover:bg-slate-800'
           }`}
         >
           <Heart className={`w-4 h-4 ${isLiked ? 'fill-rose-500 text-rose-500' : ''}`} />
         </button>
-        <span className="text-[10px] font-medium text-slate-300 mt-1">
-          {ad.likesCount.toLocaleString()}
-        </span>
+        <span className="text-[10px] font-medium text-slate-300 mt-1">{ad.likesCount.toLocaleString()}</span>
       </div>
 
       {/* Comment Button */}
@@ -64,9 +56,7 @@ export const ActionRail: React.FC<ActionRailProps> = ({ ad, isLiked, isBookmarke
         >
           <MessageSquare className="w-4 h-4" />
         </button>
-        <span className="text-[10px] font-medium text-slate-300 mt-1">
-          {ad.commentsCount.toLocaleString()}
-        </span>
+        <span className="text-[10px] font-medium text-slate-300 mt-1">{ad.commentsCount.toLocaleString()}</span>
       </div>
 
       {/* Bookmark Button */}
@@ -74,16 +64,14 @@ export const ActionRail: React.FC<ActionRailProps> = ({ ad, isLiked, isBookmarke
         <button
           onClick={() => toggleBookmarkAd(ad.id)}
           className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all ${
-            isBookmarked 
-              ? 'bg-blue-500/15 text-blue-400 border border-blue-500/30' 
+            isBookmarked
+              ? 'bg-blue-500/15 text-blue-400 border border-blue-500/30'
               : 'bg-slate-900/80 backdrop-blur-sm text-slate-300 hover:text-white border border-slate-800 hover:bg-slate-800'
           }`}
         >
           <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-blue-400 text-blue-400' : ''}`} />
         </button>
-        <span className="text-[10px] font-medium text-slate-300 mt-1">
-          保存
-        </span>
+        <span className="text-[10px] font-medium text-slate-300 mt-1">保存</span>
       </div>
 
       {/* Share Button */}
@@ -94,9 +82,7 @@ export const ActionRail: React.FC<ActionRailProps> = ({ ad, isLiked, isBookmarke
         >
           <Share2 className="w-4 h-4" />
         </button>
-        <span className="text-[10px] font-medium text-slate-300 mt-1">
-          共有
-        </span>
+        <span className="text-[10px] font-medium text-slate-300 mt-1">共有</span>
       </div>
 
       {/* LP Shortcut Icon */}
@@ -108,9 +94,7 @@ export const ActionRail: React.FC<ActionRailProps> = ({ ad, isLiked, isBookmarke
         >
           <FileText className="w-4 h-4" />
         </button>
-        <span className="text-[10px] font-medium text-blue-400 mt-1">
-          詳細
-        </span>
+        <span className="text-[10px] font-medium text-blue-400 mt-1">詳細</span>
       </div>
     </div>
   );

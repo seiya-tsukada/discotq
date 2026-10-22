@@ -56,12 +56,7 @@ export const ModerationQueue: React.FC<ModerationQueueProps> = ({
             >
               {/* Media Preview */}
               <div className="relative w-36 h-48 rounded-xl overflow-hidden bg-slate-950 shrink-0 border border-slate-800">
-                <video
-                  src={ad.videoUrl}
-                  poster={ad.posterUrl}
-                  controls
-                  className="w-full h-full object-cover"
-                />
+                <video src={ad.videoUrl} poster={ad.posterUrl} controls className="w-full h-full object-cover" />
               </div>
 
               {/* Metadata & Audit Info */}
@@ -100,14 +95,14 @@ export const ModerationQueue: React.FC<ModerationQueueProps> = ({
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-500 block">付与リワード / 予算</span>
-                    <span className="font-semibold text-emerald-400">+{ad.rewardPoints}pt / ¥{ad.totalBudget.toLocaleString()}</span>
+                    <span className="font-semibold text-emerald-400">
+                      +{ad.rewardPoints}pt / ¥{ad.totalBudget.toLocaleString()}
+                    </span>
                   </div>
                 </div>
 
                 {ad.reviewFeedback && (
-                  <p className="text-xs text-slate-400 italic">
-                    過去の審査メモ: {ad.reviewFeedback}
-                  </p>
+                  <p className="text-xs text-slate-400 italic">過去の審査メモ: {ad.reviewFeedback}</p>
                 )}
               </div>
 
@@ -145,13 +140,8 @@ export const ModerationQueue: React.FC<ModerationQueueProps> = ({
       {selectedAdForReview && (
         <div className="p-4 rounded-xl bg-slate-900 border border-rose-500/30 space-y-3">
           <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold text-rose-400">
-              「{selectedAdForReview.title}」の差戻し理由と修正指示
-            </h4>
-            <button
-              onClick={() => onSelectAdForReview(null)}
-              className="text-xs text-slate-400 hover:text-white"
-            >
+            <h4 className="text-xs font-bold text-rose-400">「{selectedAdForReview.title}」の差戻し理由と修正指示</h4>
+            <button onClick={() => onSelectAdForReview(null)} className="text-xs text-slate-400 hover:text-white">
               閉じる
             </button>
           </div>

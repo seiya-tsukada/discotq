@@ -22,7 +22,6 @@ export const AdUploadForm: React.FC<AdUploadFormProps> = ({ form, onCancel }) =>
       </div>
 
       <form onSubmit={form.handleSubmitAd} className="space-y-6">
-
         {/* Media Upload Box */}
         <CreativeMediaSection form={form} />
 
@@ -53,7 +52,6 @@ export const AdUploadForm: React.FC<AdUploadFormProps> = ({ form, onCancel }) =>
             キャンセル
           </button>
         </div>
-
       </form>
     </div>
   );

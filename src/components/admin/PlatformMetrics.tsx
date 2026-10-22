@@ -28,7 +28,9 @@ export const PlatformMetrics: React.FC<PlatformMetricsProps> = ({ ads, pendingCo
       <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
         <span className="text-xs text-slate-400 font-medium">プラットフォーム総インプレッション</span>
         <p className="text-2xl font-bold text-blue-400 mt-1">{totalImpressions.toLocaleString()}</p>
-        <span className="text-[10px] text-slate-400 font-medium mt-1 inline-block">完全視聴: {totalViews.toLocaleString()}</span>
+        <span className="text-[10px] text-slate-400 font-medium mt-1 inline-block">
+          完全視聴: {totalViews.toLocaleString()}
+        </span>
       </div>
       <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
         <span className="text-xs text-slate-400 font-medium">累計流通広告費</span>

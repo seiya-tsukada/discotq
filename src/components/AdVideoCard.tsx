@@ -17,12 +17,7 @@ interface AdVideoCardProps {
 }
 
 export const AdVideoCard: React.FC<AdVideoCardProps> = ({ ad, isActive }) => {
-  const {
-    user,
-    toggleLikeAd,
-    setIsAuthModalOpen,
-    claimAdWatchReward
-  } = useApp();
+  const { user, toggleLikeAd, setIsAuthModalOpen, claimAdWatchReward } = useApp();
 
   const [isMuted, setIsMuted] = useState(true);
   const [showCenterIcon, setShowCenterIcon] = useState<CenterIconType | null>(null);
@@ -127,11 +122,7 @@ export const AdVideoCard: React.FC<AdVideoCardProps> = ({ ad, isActive }) => {
         />
       ) : (
         <div className="absolute inset-0 w-full h-full overflow-hidden">
-          <img
-            src={ad.posterUrl}
-            alt={ad.title}
-            className="w-full h-full object-cover"
-          />
+          <img src={ad.posterUrl} alt={ad.title} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-slate-950/40" />
         </div>
       )}

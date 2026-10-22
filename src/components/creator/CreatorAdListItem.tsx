@@ -10,17 +10,11 @@ interface CreatorAdListItemProps {
 
 export const CreatorAdListItem: React.FC<CreatorAdListItemProps> = ({ ad, onToggleStatus, onDelete }) => {
   return (
-    <div
-      className="p-4 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
-    >
+    <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
       {/* Left: Thumbnail & Info */}
       <div className="flex items-start sm:items-center gap-3.5 min-w-0">
         <div className="relative w-14 h-20 rounded-lg overflow-hidden bg-slate-900 shrink-0 border border-slate-800">
-          <img
-            src={ad.posterUrl}
-            alt={ad.title}
-            className="w-full h-full object-cover"
-          />
+          <img src={ad.posterUrl} alt={ad.title} className="w-full h-full object-cover" />
         </div>
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -49,12 +43,12 @@ export const CreatorAdListItem: React.FC<CreatorAdListItemProps> = ({ ad, onTogg
           </div>
 
           <h3 className="text-sm font-semibold text-white leading-snug line-clamp-1">{ad.title}</h3>
-          <p className="text-xs text-slate-400 line-clamp-1 mt-0.5">CTA: 「{ad.ctaText}」 → LP: {ad.landingPage.externalUrl}</p>
+          <p className="text-xs text-slate-400 line-clamp-1 mt-0.5">
+            CTA: 「{ad.ctaText}」 → LP: {ad.landingPage.externalUrl}
+          </p>
 
           {ad.reviewFeedback && (
-            <p className="text-[11px] text-slate-500 mt-1 italic">
-              ※ 審査コメント: {ad.reviewFeedback}
-            </p>
+            <p className="text-[11px] text-slate-500 mt-1 italic">※ 審査コメント: {ad.reviewFeedback}</p>
           )}
         </div>
       </div>

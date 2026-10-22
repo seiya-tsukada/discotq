@@ -99,7 +99,11 @@ export const useCreatorAdForm = (onSubmitted: () => void): CreatorAdForm => {
       heroImage: posterUrl,
       subTitle: description || 'DiscoTQ公式スポンサーがお届けするサービス詳細',
       keyFeatures: [
-        { title: '独自設計と徹底した品質管理', desc: '厳しい検査基準をクリアした安心のプロダクト', icon: 'ShieldCheck' },
+        {
+          title: '独自設計と徹底した品質管理',
+          desc: '厳しい検査基準をクリアした安心のプロダクト',
+          icon: 'ShieldCheck',
+        },
         { title: '公式限定サポート体制', desc: '専任スタッフによる万全のカスタマーサポート', icon: 'Zap' },
         { title: '高いユーザー満足度', desc: 'ユーザーアンケートで95%以上の高評価を獲得', icon: 'Star' },
       ],
@@ -109,11 +113,14 @@ export const useCreatorAdForm = (onSubmitted: () => void): CreatorAdForm => {
         expiresAt: DEFAULT_OFFER_EXPIRES_AT,
       },
       reviews: [
-        { name: '公式導入ユーザー', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&auto=format&fit=crop&q=80', rating: 5, comment: '動画広告で要点が分かりやすく、スムーズに利用できました。' },
+        {
+          name: '公式導入ユーザー',
+          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&auto=format&fit=crop&q=80',
+          rating: 5,
+          comment: '動画広告で要点が分かりやすく、スムーズに利用できました。',
+        },
       ],
-      faqs: [
-        { q: '利用開始の手続きについて', a: '公式ウェブサイトより最短3分でお手続き可能です。' },
-      ],
+      faqs: [{ q: '利用開始の手続きについて', a: '公式ウェブサイトより最短3分でお手続き可能です。' }],
       externalUrl: externalUrl || CREATOR_FORM_DEFAULTS.fallbackExternalUrl,
       ctaButtonText: '公式サイトで詳細を確認する',
       readRewardPoints: DEFAULT_LP_READ_REWARD_POINTS,

@@ -1,4 +1,4 @@
-export const loadFromStorage = <T,>(key: string, fallback: () => T): T => {
+export const loadFromStorage = <T>(key: string, fallback: () => T): T => {
   try {
     const saved = localStorage.getItem(key);
     if (saved) return JSON.parse(saved);

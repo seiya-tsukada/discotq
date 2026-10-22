@@ -18,9 +18,7 @@ export const LandingOfferSection: React.FC<LandingOfferSectionProps> = ({ form }
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-medium text-slate-400 mb-1">
-            公式LPリンクURL
-          </label>
+          <label className="block text-xs font-medium text-slate-400 mb-1">公式LPリンクURL</label>
           <input
             type="url"
             value={externalUrl}
@@ -29,9 +27,7 @@ export const LandingOfferSection: React.FC<LandingOfferSectionProps> = ({ form }
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-slate-400 mb-1">
-            限定優待コード
-          </label>
+          <label className="block text-xs font-medium text-slate-400 mb-1">限定優待コード</label>
           <input
             type="text"
             value={couponCode}
@@ -42,9 +38,7 @@ export const LandingOfferSection: React.FC<LandingOfferSectionProps> = ({ form }
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-slate-400 mb-1">
-          優待割引・オファー内容
-        </label>
+        <label className="block text-xs font-medium text-slate-400 mb-1">優待割引・オファー内容</label>
         <input
           type="text"
           value={discountText}

@@ -1,21 +1,9 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { 
-  PlayCircle, 
-  Coins, 
-  User, 
-  LogOut, 
-  ShoppingBag,
-  Sparkles
-} from 'lucide-react';
+import { PlayCircle, Coins, User, LogOut, ShoppingBag, Sparkles } from 'lucide-react';
 
 export const HeaderNav: React.FC = () => {
-  const { 
-    user, 
-    setIsPointStoreOpen, 
-    setIsAuthModalOpen, 
-    logout,
-  } = useApp();
+  const { user, setIsPointStoreOpen, setIsAuthModalOpen, logout } = useApp();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800 px-4 py-2.5">
@@ -35,9 +23,7 @@ export const HeaderNav: React.FC = () => {
                   Ad Media
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 hidden sm:block">
-                新しい発見があるショート広告プラットフォーム
-              </p>
+              <p className="text-[11px] text-slate-400 hidden sm:block">新しい発見があるショート広告プラットフォーム</p>
             </div>
           </div>
         </div>
@@ -79,9 +65,7 @@ export const HeaderNav: React.FC = () => {
                   <span>ウォレット</span>
                 )}
               </span>
-              {user.unclaimedGuestPoints > 0 && (
-                <span className="flex h-2 w-2 rounded-full bg-blue-500"></span>
-              )}
+              {user.unclaimedGuestPoints > 0 && <span className="flex h-2 w-2 rounded-full bg-blue-500"></span>}
             </button>
           )}
 
@@ -98,15 +82,11 @@ export const HeaderNav: React.FC = () => {
           {/* User Account / Auth Toggle */}
           {user.isLoggedIn ? (
             <div className="flex items-center gap-2 pl-1">
-              <button 
+              <button
                 onClick={() => setIsPointStoreOpen(true)}
                 className="flex items-center gap-2 p-1 rounded-full bg-slate-900 border border-slate-700 hover:border-slate-500 transition-all cursor-pointer"
               >
-                <img
-                  src={user.avatar}
-                  alt={user.name}
-                  className="w-7 h-7 rounded-full object-cover"
-                />
+                <img src={user.avatar} alt={user.name} className="w-7 h-7 rounded-full object-cover" />
                 <span className="hidden lg:inline text-xs font-medium text-slate-200 max-w-[100px] truncate pr-1.5">
                   {user.name}
                 </span>

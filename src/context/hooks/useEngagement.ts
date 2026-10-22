@@ -18,9 +18,7 @@ export const useEngagement = ({ user, setUser, setAds, showNotification }: Deps)
 
   const toggleLikeAd = (adId: string) => {
     const isLiked = user.likedAdIds.includes(adId);
-    const updatedLikedIds = isLiked
-      ? user.likedAdIds.filter((id) => id !== adId)
-      : [...user.likedAdIds, adId];
+    const updatedLikedIds = isLiked ? user.likedAdIds.filter((id) => id !== adId) : [...user.likedAdIds, adId];
 
     setUser((prev) => ({ ...prev, likedAdIds: updatedLikedIds }));
     setAds((prev) =>

@@ -45,27 +45,31 @@ export const AllAdsTable: React.FC<AllAdsTableProps> = ({ ads }) => {
                     />
                     <div className="max-w-[220px]">
                       <p className="font-semibold text-white truncate">{ad.title}</p>
-                      <p className="text-[11px] text-slate-400">@{ad.brandName}・{ad.category}</p>
+                      <p className="text-[11px] text-slate-400">
+                        @{ad.brandName}・{ad.category}
+                      </p>
                     </div>
                   </div>
                 </td>
                 <td className="p-3">
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${
-                    ad.reviewStatus === 'approved'
-                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                      : ad.reviewStatus === 'pending'
-                      ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                      : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                  }`}>
+                  <span
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${
+                      ad.reviewStatus === 'approved'
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                        : ad.reviewStatus === 'pending'
+                          ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                          : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                    }`}
+                  >
                     {ad.reviewStatus === 'approved' ? '承認済' : ad.reviewStatus === 'pending' ? '審査中' : '差戻し'}
                   </span>
                 </td>
                 <td className="p-3">
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded ${
-                    ad.status === 'active'
-                      ? 'bg-blue-500/10 text-blue-400'
-                      : 'bg-slate-800 text-slate-400'
-                  }`}>
+                  <span
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded ${
+                      ad.status === 'active' ? 'bg-blue-500/10 text-blue-400' : 'bg-slate-800 text-slate-400'
+                    }`}
+                  >
                     {ad.status === 'active' ? '配信中' : '停止中'}
                   </span>
                 </td>

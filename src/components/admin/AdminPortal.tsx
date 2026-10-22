@@ -43,7 +43,6 @@ export const AdminPortal: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
-        
         <PlatformMetrics ads={ads} pendingCount={pendingAds.length} creatorsCount={creators.length} />
 
         {activeTab === 'moderation' && (
@@ -61,7 +60,6 @@ export const AdminPortal: React.FC = () => {
         {activeTab === 'creators' && <CreatorsTable creators={creators} />}
 
         {activeTab === 'allAds' && <AllAdsTable ads={ads} />}
-
       </main>
     </div>
   );

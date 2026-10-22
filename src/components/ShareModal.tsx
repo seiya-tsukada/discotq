@@ -44,11 +44,7 @@ export const ShareModal: React.FC = () => {
         {/* Content */}
         <div className="p-4 space-y-3.5">
           <div className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-950 border border-slate-800">
-            <img
-              src={currentAd.posterUrl}
-              alt={currentAd.title}
-              className="w-10 h-14 rounded-md object-cover"
-            />
+            <img src={currentAd.posterUrl} alt={currentAd.title} className="w-10 h-14 rounded-md object-cover" />
             <div className="flex-1 min-w-0">
               <span className="text-[10px] text-slate-400 font-semibold block">{currentAd.brandName}</span>
               <p className="text-xs font-semibold text-white truncate">{currentAd.title}</p>

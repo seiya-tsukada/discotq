@@ -70,7 +70,8 @@ export const INITIAL_ADS: AdItem[] = [
     brandLogo: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=100&auto=format&fit=crop&q=80',
     verified: true,
     title: '自然由来98%のオーガニック集中リペア美容液「NautreDrop」🌿',
-    description: '日経トレンディ掲載。皮膚科学に基づいて国内ラボで調合された高機能植物セラム。肌本来のバリア機能を整え、凛としたハリ肌へ導きます。DiscoTQ限定で公式トライアルセットを特別ご案内中。',
+    description:
+      '日経トレンディ掲載。皮膚科学に基づいて国内ラボで調合された高機能植物セラム。肌本来のバリア機能を整え、凛としたハリ肌へ導きます。DiscoTQ限定で公式トライアルセットを特別ご案内中。',
     tags: ['#オーガニックコスメ', '#スキンケア', '#国内製造', '#公式トライアル'],
     videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
     posterUrl: 'https://images.unsplash.com/photo-1608248597359-0a6230873a4b?w=800&auto=format&fit=crop&q=80',
@@ -119,9 +120,21 @@ export const INITIAL_ADS: AdItem[] = [
       heroImage: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=1000&auto=format&fit=crop&q=80',
       subTitle: '皮膚科学と植物療法の融合。国内GMP認定工場で製造された無添加処方セラム',
       keyFeatures: [
-        { title: '天然由来ペプチド複合体', desc: '肌の角質層深くまでうるおいを届け、乾燥による小じわを目立たなくします', icon: 'Sparkles' },
-        { title: '7つのフリー処方', desc: 'パラベン、鉱物油、合成着色料、石油系界面活性剤を完全無添加', icon: 'ShieldCheck' },
-        { title: '国内第三者機関テスト済', desc: '敏感肌被験者によるパッチテスト・スティンギングテストを実施済み', icon: 'Star' },
+        {
+          title: '天然由来ペプチド複合体',
+          desc: '肌の角質層深くまでうるおいを届け、乾燥による小じわを目立たなくします',
+          icon: 'Sparkles',
+        },
+        {
+          title: '7つのフリー処方',
+          desc: 'パラベン、鉱物油、合成着色料、石油系界面活性剤を完全無添加',
+          icon: 'ShieldCheck',
+        },
+        {
+          title: '国内第三者機関テスト済',
+          desc: '敏感肌被験者によるパッチテスト・スティンギングテストを実施済み',
+          icon: 'Star',
+        },
       ],
       specialOffer: {
         couponCode: 'ADTOK-REPAIR20',
@@ -129,12 +142,28 @@ export const INITIAL_ADS: AdItem[] = [
         expiresAt: '2026年10月末まで',
       },
       reviews: [
-        { name: '松本 陽子 (32歳・会社員)', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&auto=format&fit=crop&q=80', rating: 5, comment: 'テクスチャーがみずみずしく、香料も上品。朝のメイク前でもベタつかずに重宝しています。' },
-        { name: 'K. Takahashi (40歳)', avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=80&auto=format&fit=crop&q=80', rating: 5, comment: '季節の変わり目のゆらぎ肌にぴったりでした。トライアルから本品に移行しました。' },
+        {
+          name: '松本 陽子 (32歳・会社員)',
+          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&auto=format&fit=crop&q=80',
+          rating: 5,
+          comment: 'テクスチャーがみずみずしく、香料も上品。朝のメイク前でもベタつかずに重宝しています。',
+        },
+        {
+          name: 'K. Takahashi (40歳)',
+          avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=80&auto=format&fit=crop&q=80',
+          rating: 5,
+          comment: '季節の変わり目のゆらぎ肌にぴったりでした。トライアルから本品に移行しました。',
+        },
       ],
       faqs: [
-        { q: '定期コースの回数縛りはありますか？', a: '一切ございません。マイページまたはお電話にていつでも変更・解約いただけます。' },
-        { q: '敏感肌でも使用可能ですか？', a: '皮膚科専門医監修のもと低刺激設計で作られておりますが、万一お肌に合わない場合は30日間返金保証をご利用いただけます。' },
+        {
+          q: '定期コースの回数縛りはありますか？',
+          a: '一切ございません。マイページまたはお電話にていつでも変更・解約いただけます。',
+        },
+        {
+          q: '敏感肌でも使用可能ですか？',
+          a: '皮膚科専門医監修のもと低刺激設計で作られておりますが、万一お肌に合わない場合は30日間返金保証をご利用いただけます。',
+        },
       ],
       externalUrl: 'https://botanical-lab.tokyo/nature-drop',
       ctaButtonText: '公式ストアで製品仕様・トライアル詳細を見る',
@@ -147,7 +176,8 @@ export const INITIAL_ADS: AdItem[] = [
     brandLogo: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=100&auto=format&fit=crop&q=80',
     verified: true,
     title: 'ビジネスパーソンのための高静音ANCワイヤレスイヤホン「Aero Pro 2」🎧',
-    description: '新幹線やオープンスペースの騒音を的確に低減する独自ハイブリッドANCと、オンライン会議でクリアな音声を届けるAIビームフォーミングマイクを搭載。DiscoTQ限定で公式2年保証＆専用ケース付帯。',
+    description:
+      '新幹線やオープンスペースの騒音を的確に低減する独自ハイブリッドANCと、オンライン会議でクリアな音声を届けるAIビームフォーミングマイクを搭載。DiscoTQ限定で公式2年保証＆専用ケース付帯。',
     tags: ['#ビジネスギア', '#ノイズキャンセリング', '#テレワーク', '#音響技術'],
     videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
     posterUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80',
@@ -181,7 +211,8 @@ export const INITIAL_ADS: AdItem[] = [
         {
           type: 'reward',
           title: '付与ポイント最適化',
-          description: '現行の25ptから30ptに調整すると、15秒完走率が約18%増加し、ブランド想起スコアが大幅に改善されます。',
+          description:
+            '現行の25ptから30ptに調整すると、15秒完走率が約18%増加し、ブランド想起スコアが大幅に改善されます。',
           expectedLift: '完走率 +18.0%',
         },
       ],
@@ -190,9 +221,21 @@ export const INITIAL_ADS: AdItem[] = [
       heroImage: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=1000&auto=format&fit=crop&q=80',
       subTitle: '最大45dBノイズ低減・マルチポイント2台同時接続対応のビジネスフラッグシップモデル',
       keyFeatures: [
-        { title: 'AIスマートノイズリダクション', desc: '航空機・電車・オフィス音をリアルタイムに検知し、最適な低減レベルを自動調整', icon: 'ShieldCheck' },
-        { title: '6基のマイクによる音声明瞭化', desc: '風切り音と周囲の環境音を分離し、Web会議での発話を鮮明に届けます', icon: 'Zap' },
-        { title: '36時間ロングバッテリー', desc: '本体8時間＋充電ケース28時間。Qiワイヤレス充電にも完全対応', icon: 'TrendingUp' },
+        {
+          title: 'AIスマートノイズリダクション',
+          desc: '航空機・電車・オフィス音をリアルタイムに検知し、最適な低減レベルを自動調整',
+          icon: 'ShieldCheck',
+        },
+        {
+          title: '6基のマイクによる音声明瞭化',
+          desc: '風切り音と周囲の環境音を分離し、Web会議での発話を鮮明に届けます',
+          icon: 'Zap',
+        },
+        {
+          title: '36時間ロングバッテリー',
+          desc: '本体8時間＋充電ケース28時間。Qiワイヤレス充電にも完全対応',
+          icon: 'TrendingUp',
+        },
       ],
       specialOffer: {
         couponCode: 'ADTOK-AERO15',
@@ -200,10 +243,19 @@ export const INITIAL_ADS: AdItem[] = [
         expiresAt: '先着300台限定',
       },
       reviews: [
-        { name: '佐藤 健一 (コンサルタント)', avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=80&auto=format&fit=crop&q=80', rating: 5, comment: '出張時の新幹線内で重宝しています。PCとスマホの同時接続（マルチポイント）の切り替えが非常にスムーズです。' },
+        {
+          name: '佐藤 健一 (コンサルタント)',
+          avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=80&auto=format&fit=crop&q=80',
+          rating: 5,
+          comment:
+            '出張時の新幹線内で重宝しています。PCとスマホの同時接続（マルチポイント）の切り替えが非常にスムーズです。',
+        },
       ],
       faqs: [
-        { q: '法人での一括導入や請求書払いには対応していますか？', a: 'はい、法人様専用窓口にて請求書払いやボリュームディスカウントを承っております。' },
+        {
+          q: '法人での一括導入や請求書払いには対応していますか？',
+          a: 'はい、法人様専用窓口にて請求書払いやボリュームディスカウントを承っております。',
+        },
       ],
       externalUrl: 'https://aeroacoustics.jp/pro2',
       ctaButtonText: '公式サイトでスペック詳細・保証内容を確認する',
@@ -216,7 +268,8 @@ export const INITIAL_ADS: AdItem[] = [
     brandLogo: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=100&auto=format&fit=crop&q=80',
     verified: true,
     title: '管理栄養士監修の冷凍ウェルネス定期便。忙しい日々の健康をサポート 🥗',
-    description: '1食あたり食塩相当量2.0g以下、タンパク質20g以上。急速冷凍技術で出来立ての美味しさと栄養価をそのままパウチに凝縮。オフィスランチや遅い日の夕食に選ばれています。',
+    description:
+      '1食あたり食塩相当量2.0g以下、タンパク質20g以上。急速冷凍技術で出来立ての美味しさと栄養価をそのままパウチに凝縮。オフィスランチや遅い日の夕食に選ばれています。',
     tags: ['#ウェルネス', '#ヘルスケア', '#栄養管理', '#時短'],
     videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4',
     posterUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800&auto=format&fit=crop&q=80',
@@ -245,9 +298,21 @@ export const INITIAL_ADS: AdItem[] = [
       heroImage: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1000&auto=format&fit=crop&q=80',
       subTitle: '医学・栄養学の知見に基づき設計されたプレミアムヘルスケアミール',
       keyFeatures: [
-        { title: 'PFCバランス徹底管理', desc: 'タンパク質・脂質・炭水化物の理想比率を保ち、健康的な体づくりをサポート', icon: 'ShieldCheck' },
-        { title: '保存料・合成着色料不使用', desc: '素材本来の味を活かした和洋中60種類以上の豊富なローテーションメニュー', icon: 'Sparkles' },
-        { title: '省スペーススリム容器', desc: '冷凍庫の隙間に収まる厚さ2.5cmのコンパクトパッケージ設計', icon: 'Star' },
+        {
+          title: 'PFCバランス徹底管理',
+          desc: 'タンパク質・脂質・炭水化物の理想比率を保ち、健康的な体づくりをサポート',
+          icon: 'ShieldCheck',
+        },
+        {
+          title: '保存料・合成着色料不使用',
+          desc: '素材本来の味を活かした和洋中60種類以上の豊富なローテーションメニュー',
+          icon: 'Sparkles',
+        },
+        {
+          title: '省スペーススリム容器',
+          desc: '冷凍庫の隙間に収まる厚さ2.5cmのコンパクトパッケージ設計',
+          icon: 'Star',
+        },
       ],
       specialOffer: {
         couponCode: 'ADTOK-MEAL30',
@@ -255,10 +320,18 @@ export const INITIAL_ADS: AdItem[] = [
         expiresAt: '今月末まで',
       },
       reviews: [
-        { name: 'IT企業勤務 (31歳)', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&auto=format&fit=crop&q=80', rating: 5, comment: '自炊する時間が取れない平日の心強い味方です。味付けも薄すぎず非常に満足度が高いです。' },
+        {
+          name: 'IT企業勤務 (31歳)',
+          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&auto=format&fit=crop&q=80',
+          rating: 5,
+          comment: '自炊する時間が取れない平日の心強い味方です。味付けも薄すぎず非常に満足度が高いです。',
+        },
       ],
       faqs: [
-        { q: '配送サイクルの変更やスキップは可能ですか？', a: 'Webマイページよりいつでも配送日の変更、一時スキップが可能です。' },
+        {
+          q: '配送サイクルの変更やスキップは可能ですか？',
+          a: 'Webマイページよりいつでも配送日の変更、一時スキップが可能です。',
+        },
       ],
       externalUrl: 'https://smartmeal.jp/official',
       ctaButtonText: 'メニュー一覧・プラン詳細を見る',
@@ -271,7 +344,8 @@ export const INITIAL_ADS: AdItem[] = [
     brandLogo: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=100&auto=format&fit=crop&q=80',
     verified: true,
     title: '導入社数5,000社突破。直感操作で営業効率を2.4倍に高める次世代CRM 📊',
-    description: '案件進捗・顧客コミュニケーション・売上予測を一元管理。SlackやGoogle Workspaceとの自動同期で入力工数を大幅削減。DiscoTQ経由で30日間無料トライアル＆導入支援サポート提供中。',
+    description:
+      '案件進捗・顧客コミュニケーション・売上予測を一元管理。SlackやGoogle Workspaceとの自動同期で入力工数を大幅削減。DiscoTQ経由で30日間無料トライアル＆導入支援サポート提供中。',
     tags: ['#SaaS', '#CRM', '#業務効率化', '#DX'],
     videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
     posterUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=80',
@@ -300,9 +374,21 @@ export const INITIAL_ADS: AdItem[] = [
       heroImage: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=1000&auto=format&fit=crop&q=80',
       subTitle: '営業・マーケティング・カスタマーサクセスをつなぐ統合クラウドプラットフォーム',
       keyFeatures: [
-        { title: '最短1日で運用スタート', desc: '複雑な設定不要。現場が使いやすいシンプルなUIで定着率99.2%', icon: 'Zap' },
-        { title: 'AIによる商談サマリー', desc: 'ミーティング録音から要点とネクストアクションを自動生成', icon: 'Sparkles' },
-        { title: '堅牢なセキュリティ基準', desc: 'SOC2 Type II認証取得・国内データセンターでの暗号化保管', icon: 'ShieldCheck' },
+        {
+          title: '最短1日で運用スタート',
+          desc: '複雑な設定不要。現場が使いやすいシンプルなUIで定着率99.2%',
+          icon: 'Zap',
+        },
+        {
+          title: 'AIによる商談サマリー',
+          desc: 'ミーティング録音から要点とネクストアクションを自動生成',
+          icon: 'Sparkles',
+        },
+        {
+          title: '堅牢なセキュリティ基準',
+          desc: 'SOC2 Type II認証取得・国内データセンターでの暗号化保管',
+          icon: 'ShieldCheck',
+        },
       ],
       specialOffer: {
         couponCode: 'DISCOTQ-TRIAL30',
@@ -310,10 +396,18 @@ export const INITIAL_ADS: AdItem[] = [
         expiresAt: '常時受付中',
       },
       reviews: [
-        { name: '営業企画部長 H.O.', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&auto=format&fit=crop&q=80', rating: 5, comment: '属人化していた顧客情報が可視化され、チーム内の情報共有スピードが格段に向上しました。' },
+        {
+          name: '営業企画部長 H.O.',
+          avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&auto=format&fit=crop&q=80',
+          rating: 5,
+          comment: '属人化していた顧客情報が可視化され、チーム内の情報共有スピードが格段に向上しました。',
+        },
       ],
       faqs: [
-        { q: '既存ツールからのデータ移行はサポートしてもらえますか？', a: 'はい、CSV取り込みや専任サポートによるデータ移行サポートをご用意しております。' },
+        {
+          q: '既存ツールからのデータ移行はサポートしてもらえますか？',
+          a: 'はい、CSV取り込みや専任サポートによるデータ移行サポートをご用意しております。',
+        },
       ],
       externalUrl: 'https://clarify-crm.io/enterprise',
       ctaButtonText: '無料トライアル・資料請求を申し込む',
@@ -326,7 +420,8 @@ export const INITIAL_ADS: AdItem[] = [
     brandLogo: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=100&auto=format&fit=crop&q=80',
     verified: false,
     title: '都市移動を革新するスマート電動アシストe-Bike「Veloce City 1」🚲',
-    description: '1充電で最大100km走行。GPS盗難防止センサー＆スマホ連動キーシステム内蔵。DiscoTQ限定予約特典として専用ヘルメット＆急速充電器を贈呈。',
+    description:
+      '1充電で最大100km走行。GPS盗難防止センサー＆スマホ連動キーシステム内蔵。DiscoTQ限定予約特典として専用ヘルメット＆急速充電器を贈呈。',
     tags: ['#モビリティ', '#eBike', '#エコ', '#スマート家電'],
     videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4',
     posterUrl: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=800&auto=format&fit=crop&q=80',
@@ -366,7 +461,10 @@ export const INITIAL_ADS: AdItem[] = [
       },
       reviews: [],
       faqs: [
-        { q: '防犯登録はどのように行えばよいですか？', a: '販売証明書を同梱いたしますので、お近くの自転車販売店にて登録可能です。' },
+        {
+          q: '防犯登録はどのように行えばよいですか？',
+          a: '販売証明書を同梱いたしますので、お近くの自転車販売店にて登録可能です。',
+        },
       ],
       externalUrl: 'https://veloce-mobility.com/city1',
       ctaButtonText: '先行予約ページを見る',
@@ -446,16 +544,57 @@ export const GIFT_ITEMS: GiftItem[] = [
 
 export const INITIAL_COMMENTS: Record<string, UserComment[]> = {
   'ad-1': [
-    { id: 'c1', adId: 'ad-1', userName: '美容ライター M.N.', userAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=60&auto=format&fit=crop&q=80', comment: '成分構成が非常に堅実で、無香料なのも使いやすいですね。LPの解説が分かりやすかったです。', likes: 24, timeAgo: '2時間前' },
-    { id: 'c2', adId: 'ad-1', userName: 'BOTANICAL LAB 公式', userAvatar: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=60&auto=format&fit=crop&q=80', comment: 'ご覧いただきありがとうございます。国内の自社提携ラボにて徹底した品質管理を行っております。', likes: 35, timeAgo: '1時間前', isSponsorReply: true },
+    {
+      id: 'c1',
+      adId: 'ad-1',
+      userName: '美容ライター M.N.',
+      userAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=60&auto=format&fit=crop&q=80',
+      comment: '成分構成が非常に堅実で、無香料なのも使いやすいですね。LPの解説が分かりやすかったです。',
+      likes: 24,
+      timeAgo: '2時間前',
+    },
+    {
+      id: 'c2',
+      adId: 'ad-1',
+      userName: 'BOTANICAL LAB 公式',
+      userAvatar: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=60&auto=format&fit=crop&q=80',
+      comment: 'ご覧いただきありがとうございます。国内の自社提携ラボにて徹底した品質管理を行っております。',
+      likes: 35,
+      timeAgo: '1時間前',
+      isSponsorReply: true,
+    },
   ],
   'ad-2': [
-    { id: 'c4', adId: 'ad-2', userName: 'リモートワーカー Y.S.', userAvatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=60&auto=format&fit=crop&q=80', comment: '通話マイクの性能が良さそうですね。オンラインMTG用に検討してみます。', likes: 18, timeAgo: '3時間前' },
+    {
+      id: 'c4',
+      adId: 'ad-2',
+      userName: 'リモートワーカー Y.S.',
+      userAvatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=60&auto=format&fit=crop&q=80',
+      comment: '通話マイクの性能が良さそうですね。オンラインMTG用に検討してみます。',
+      likes: 18,
+      timeAgo: '3時間前',
+    },
   ],
   'ad-3': [
-    { id: 'c6', adId: 'ad-3', userName: 'ウェルネス志向ユーザー', userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&auto=format&fit=crop&q=80', comment: '冷凍庫が狭いので、2.5cmの薄型パウチ設計はかなり助かります。', likes: 12, timeAgo: '4時間前' },
+    {
+      id: 'c6',
+      adId: 'ad-3',
+      userName: 'ウェルネス志向ユーザー',
+      userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&auto=format&fit=crop&q=80',
+      comment: '冷凍庫が狭いので、2.5cmの薄型パウチ設計はかなり助かります。',
+      likes: 12,
+      timeAgo: '4時間前',
+    },
   ],
   'ad-4': [
-    { id: 'c7', adId: 'ad-4', userName: '営業企画マネージャー', userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=60&auto=format&fit=crop&q=80', comment: 'Slack連携が標準で入っているのは現場のハードルが低くて良いですね。トライアル申請しました。', likes: 29, timeAgo: '2時間前' },
+    {
+      id: 'c7',
+      adId: 'ad-4',
+      userName: '営業企画マネージャー',
+      userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=60&auto=format&fit=crop&q=80',
+      comment: 'Slack連携が標準で入っているのは現場のハードルが低くて良いですね。トライアル申請しました。',
+      likes: 29,
+      timeAgo: '2時間前',
+    },
   ],
 };
