@@ -13,7 +13,7 @@ export const DEFAULT_LP_READ_REWARD_POINTS = 10;
 // LP を最下部まで読んだと判定する余白(px)
 export const LP_READ_SCROLL_THRESHOLD_PX = 80;
 
-export const GIFT_CODE_PREFIX = 'ADTOK';
+export const GIFT_CODE_PREFIX = 'DISCOTQ';
 
 export const CONFETTI_OPTIONS = {
   particleCount: 40,

@@ -137,7 +137,7 @@ export const INITIAL_ADS: AdItem[] = [
         },
       ],
       specialOffer: {
-        couponCode: 'ADTOK-REPAIR20',
+        couponCode: 'DISCOTQ-REPAIR20',
         discount: '公式ストア限定 20% 優待クーポン（送料無料・定期縛りなし）',
         expiresAt: '2026年10月末まで',
       },
@@ -238,7 +238,7 @@ export const INITIAL_ADS: AdItem[] = [
         },
       ],
       specialOffer: {
-        couponCode: 'ADTOK-AERO15',
+        couponCode: 'DISCOTQ-AERO15',
         discount: 'DiscoTQ限定 公式ストア15% OFF ＋ 2年延長保証プログラム',
         expiresAt: '先着300台限定',
       },
@@ -315,7 +315,7 @@ export const INITIAL_ADS: AdItem[] = [
         },
       ],
       specialOffer: {
-        couponCode: 'ADTOK-MEAL30',
+        couponCode: 'DISCOTQ-MEAL30',
         discount: '初回限定 30% OFF （全国クール便送料無料）',
         expiresAt: '今月末まで',
       },
@@ -455,7 +455,7 @@ export const INITIAL_ADS: AdItem[] = [
         { title: '盗難防止GPS追跡', desc: '専用アプリから位置情報を24時間リアルタイム追跡可能', icon: 'ShieldCheck' },
       ],
       specialOffer: {
-        couponCode: 'ADTOK-BIKE10',
+        couponCode: 'DISCOTQ-BIKE10',
         discount: '先行予約者限定 10% OFF ＋ 公式ヘルメット無料',
         expiresAt: '2026年11月末まで',
       },

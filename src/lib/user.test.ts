@@ -22,8 +22,8 @@ describe('toggleId', () => {
 });
 
 describe('generateGiftCode', () => {
-  it('ADTOK-XXXX-XXXX 形式のコードを生成する', () => {
-    expect(generateGiftCode()).toMatch(/^ADTOK-[0-9A-Z]{1,4}-[0-9A-Z]{1,4}$/);
+  it('DISCOTQ-XXXX-XXXX 形式のコードを生成する', () => {
+    expect(generateGiftCode()).toMatch(/^DISCOTQ-[0-9A-Z]{1,4}-[0-9A-Z]{1,4}$/);
   });
 });
 
