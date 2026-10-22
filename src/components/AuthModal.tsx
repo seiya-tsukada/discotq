@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, ShieldCheck, ArrowRight, Wallet, Lock, KeyRound, ArrowLeft } from 'lucide-react';
+import { X, ArrowRight, Wallet, Lock, KeyRound, ArrowLeft } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export const AuthModal: React.FC = () => {

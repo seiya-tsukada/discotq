@@ -7,7 +7,6 @@ import {
   ShieldCheck, 
   Star, 
   Zap, 
-  Flame, 
   HelpCircle, 
   Coins,
   Lock,

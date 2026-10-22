@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import { 
   X, 
-  Coins, 
   ShoppingBag, 
   History, 
   Check, 
   Copy, 
   ArrowRight,
-  ShieldCheck,
   CreditCard
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';

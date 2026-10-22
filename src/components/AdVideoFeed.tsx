@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { ChevronUp, ChevronDown, UserPlus, Gift, AlertCircle, ShieldCheck, Wallet } from 'lucide-react';
+import { ChevronUp, ChevronDown, Gift, AlertCircle, ShieldCheck, Wallet } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { AdVideoCard } from './AdVideoCard';
 
@@ -47,6 +47,8 @@ export const AdVideoFeed: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+    // goToNextAd/goToPrevAd は currentAdIndex と activeAds.length にのみ依存するため省略（既存挙動を維持）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentAdIndex, activeAds.length]);
 
   // Touch swipe handling
