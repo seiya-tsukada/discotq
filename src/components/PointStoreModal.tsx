@@ -1,28 +1,18 @@
 import React, { useState } from 'react';
-import { 
-  X, 
-  Coins, 
-  ShoppingBag, 
-  History, 
-  Check, 
-  Copy, 
-  ArrowRight,
-  ShieldCheck,
-  CreditCard
-} from 'lucide-react';
+import { X, ShoppingBag, History, Check, Copy, ArrowRight, CreditCard } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { GiftItem } from '../types';
 import { COPY_FEEDBACK_DURATION_MS } from '../constants/timing';
 
 export const PointStoreModal: React.FC = () => {
-  const { 
-    isPointStoreOpen, 
-    setIsPointStoreOpen, 
-    user, 
-    giftItems, 
-    exchangePoints, 
+  const {
+    isPointStoreOpen,
+    setIsPointStoreOpen,
+    user,
+    giftItems,
+    exchangePoints,
     setIsAuthModalOpen,
-    showNotification 
+    showNotification,
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<'store' | 'history'>('store');
@@ -57,7 +47,6 @@ export const PointStoreModal: React.FC = () => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
       <div className="relative w-full max-w-2xl max-h-[90vh] bg-slate-900 border border-slate-800 rounded-xl flex flex-col shadow-2xl overflow-hidden">
-        
         {/* Header */}
         <div className="bg-slate-950 px-5 py-3.5 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -91,9 +80,7 @@ export const PointStoreModal: React.FC = () => {
                 </span>
               </div>
               <div className="flex items-baseline gap-1.5 mt-0.5">
-                <span className="text-2xl font-bold text-white tracking-tight">
-                  {user.points.toLocaleString()}
-                </span>
+                <span className="text-2xl font-bold text-white tracking-tight">{user.points.toLocaleString()}</span>
                 <span className="text-xs font-semibold text-slate-400">pt</span>
                 <span className="text-xs text-slate-500 ml-2">
                   (累計獲得: {user.totalEarnedPoints.toLocaleString()} pt)
@@ -146,19 +133,14 @@ export const PointStoreModal: React.FC = () => {
                 <Check className="w-4 h-4" />
                 <span>交換手続きが完了しました</span>
               </div>
-              <button
-                onClick={() => setIssuedCode(null)}
-                className="text-xs text-slate-400 hover:text-white"
-              >
+              <button onClick={() => setIssuedCode(null)} className="text-xs text-slate-400 hover:text-white">
                 閉じる
               </button>
             </div>
             <div className="p-3 bg-slate-900 rounded-lg border border-slate-750 flex items-center justify-between">
               <div>
                 <p className="text-[11px] text-slate-400">{selectedGift.name}</p>
-                <p className="font-mono text-sm font-bold text-white tracking-wider">
-                  {issuedCode}
-                </p>
+                <p className="font-mono text-sm font-bold text-white tracking-wider">{issuedCode}</p>
               </div>
               <button
                 onClick={() => copyCode(issuedCode)}
@@ -190,24 +172,16 @@ export const PointStoreModal: React.FC = () => {
                           className="w-12 h-12 rounded-lg object-cover bg-slate-900 border border-slate-800 shrink-0"
                         />
                         <div className="flex-1 min-w-0">
-                          <span className="text-[10px] font-semibold text-slate-400 uppercase">
-                            {gift.brand}
-                          </span>
-                          <h3 className="font-semibold text-xs text-white truncate">
-                            {gift.name}
-                          </h3>
-                          <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
-                            {gift.valueDescription}
-                          </p>
+                          <span className="text-[10px] font-semibold text-slate-400 uppercase">{gift.brand}</span>
+                          <h3 className="font-semibold text-xs text-white truncate">{gift.name}</h3>
+                          <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">{gift.valueDescription}</p>
                         </div>
                       </div>
                     </div>
 
                     <div className="pt-2 border-t border-slate-850 flex items-center justify-between gap-2 mt-1">
                       <div className="flex items-baseline gap-1">
-                        <span className="text-sm font-bold text-slate-100">
-                          {gift.pointsCost.toLocaleString()}
-                        </span>
+                        <span className="text-sm font-bold text-slate-100">{gift.pointsCost.toLocaleString()}</span>
                         <span className="text-[10px] text-slate-400">pt</span>
                       </div>
 
@@ -218,8 +192,8 @@ export const PointStoreModal: React.FC = () => {
                           !user.isLoggedIn
                             ? 'bg-slate-800 hover:bg-slate-750 text-slate-300 border border-slate-700'
                             : canAfford
-                            ? 'bg-blue-600 hover:bg-blue-500 text-white'
-                            : 'bg-slate-900 text-slate-600 border border-slate-800 cursor-not-allowed'
+                              ? 'bg-blue-600 hover:bg-blue-500 text-white'
+                              : 'bg-slate-900 text-slate-600 border border-slate-800 cursor-not-allowed'
                         }`}
                       >
                         {!user.isLoggedIn ? (
@@ -255,9 +229,7 @@ export const PointStoreModal: React.FC = () => {
                       <p className="text-[10px] text-slate-500 mt-0.5">{item.date}</p>
                     </div>
                     <span
-                      className={`text-xs font-semibold ${
-                        item.points > 0 ? 'text-emerald-400' : 'text-slate-400'
-                      }`}
+                      className={`text-xs font-semibold ${item.points > 0 ? 'text-emerald-400' : 'text-slate-400'}`}
                     >
                       {item.points > 0 ? `+${item.points}` : item.points} pt
                     </span>

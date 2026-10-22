@@ -1,6 +1,6 @@
 import { AdCategory, AdOptimizationMetrics } from '../types';
 
-export const DEFAULT_COUPON_CODE = 'ADTOK2026';
+export const DEFAULT_COUPON_CODE = 'DISCOTQ2026';
 export const DEFAULT_OFFER_EXPIRES_AT = '2026年12月末まで';
 export const DEFAULT_MIN_WATCH_SECONDS = 5;
 
@@ -60,7 +60,7 @@ export const CREATOR_FORM_DEFAULTS = {
   rewardPoints: 20,
   budget: 50000,
   externalUrl: 'https://example.com/official-offer',
-  couponCode: 'ADTOK-OFFER',
+  couponCode: 'DISCOTQ-OFFER',
   discountText: '公式ストア限定 20% 優待適用',
   uploadedPosterUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80',
   fallbackExternalUrl: 'https://example.com',

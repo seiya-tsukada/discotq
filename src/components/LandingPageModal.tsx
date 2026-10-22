@@ -1,19 +1,18 @@
 import React, { useState, useRef } from 'react';
-import { 
-  X, 
-  Copy, 
-  Check, 
-  ExternalLink, 
-  ShieldCheck, 
-  Star, 
-  Zap, 
-  Flame, 
-  HelpCircle, 
+import {
+  X,
+  Copy,
+  Check,
+  ExternalLink,
+  ShieldCheck,
+  Star,
+  Zap,
+  HelpCircle,
   Coins,
   Lock,
   ChevronDown,
   Sparkles,
-  BadgeCheck
+  BadgeCheck,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { COPY_FEEDBACK_DURATION_MS } from '../constants/timing';
@@ -54,19 +53,24 @@ export const LandingPageModal: React.FC = () => {
 
   const renderIcon = (iconName: string) => {
     switch (iconName) {
-      case 'Sparkles': return <Sparkles className="w-4 h-4 text-blue-400" />;
-      case 'ShieldCheck': return <ShieldCheck className="w-4 h-4 text-emerald-400" />;
-      case 'Star': return <Star className="w-4 h-4 text-amber-400" />;
-      case 'Zap': return <Zap className="w-4 h-4 text-blue-400" />;
-      case 'TrendingUp': return <ShieldCheck className="w-4 h-4 text-blue-400" />;
-      default: return <ShieldCheck className="w-4 h-4 text-blue-400" />;
+      case 'Sparkles':
+        return <Sparkles className="w-4 h-4 text-blue-400" />;
+      case 'ShieldCheck':
+        return <ShieldCheck className="w-4 h-4 text-emerald-400" />;
+      case 'Star':
+        return <Star className="w-4 h-4 text-amber-400" />;
+      case 'Zap':
+        return <Zap className="w-4 h-4 text-blue-400" />;
+      case 'TrendingUp':
+        return <ShieldCheck className="w-4 h-4 text-blue-400" />;
+      default:
+        return <ShieldCheck className="w-4 h-4 text-blue-400" />;
     }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
       <div className="relative w-full h-full sm:h-[90vh] max-w-2xl bg-slate-900 border-0 sm:border border-slate-800 sm:rounded-xl flex flex-col shadow-2xl overflow-hidden">
-        
         {/* Browser-like Header */}
         <div className="bg-slate-950 px-4 py-2.5 border-b border-slate-800 flex items-center justify-between gap-3 shrink-0">
           <button
@@ -87,8 +91,7 @@ export const LandingPageModal: React.FC = () => {
           <div className="flex items-center gap-1">
             {isLpReadBefore || hasScrolledToBottom ? (
               <span className="text-[11px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 flex items-center gap-1">
-                <Check className="w-3 h-3" />
-                +{landingPage.readRewardPoints || 10}pt 獲得済み
+                <Check className="w-3 h-3" />+{landingPage.readRewardPoints || 10}pt 獲得済み
               </span>
             ) : (
               <span className="text-[11px] font-medium text-blue-300 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20 flex items-center gap-1">
@@ -100,7 +103,7 @@ export const LandingPageModal: React.FC = () => {
         </div>
 
         {/* Scrollable LP Content */}
-        <div 
+        <div
           ref={contentRef}
           onScroll={handleScroll}
           className="flex-1 overflow-y-auto bg-slate-900 text-slate-100 divide-y divide-slate-800"
@@ -108,11 +111,7 @@ export const LandingPageModal: React.FC = () => {
           {/* Hero Section */}
           <div className="relative">
             <div className="relative h-60 sm:h-64 w-full overflow-hidden bg-slate-950">
-              <img
-                src={landingPage.heroImage}
-                alt={activeLpAd.title}
-                className="w-full h-full object-cover"
-              />
+              <img src={landingPage.heroImage} alt={activeLpAd.title} className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
             </div>
 
@@ -125,19 +124,13 @@ export const LandingPageModal: React.FC = () => {
                 />
                 <div>
                   <div className="flex items-center gap-1">
-                    <span className="text-xs font-semibold text-slate-300">
-                      {activeLpAd.brandName}
-                    </span>
+                    <span className="text-xs font-semibold text-slate-300">{activeLpAd.brandName}</span>
                     <BadgeCheck className="w-3.5 h-3.5 text-blue-400" />
                   </div>
-                  <h1 className="text-lg sm:text-xl font-bold text-white leading-tight">
-                    {activeLpAd.title}
-                  </h1>
+                  <h1 className="text-lg sm:text-xl font-bold text-white leading-tight">{activeLpAd.title}</h1>
                 </div>
               </div>
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed mt-2">
-                {landingPage.subTitle}
-              </p>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed mt-2">{landingPage.subTitle}</p>
             </div>
           </div>
 
@@ -146,9 +139,7 @@ export const LandingPageModal: React.FC = () => {
             <div className="p-5 bg-slate-950">
               <div className="p-4 rounded-xl bg-slate-900 border border-slate-750 shadow-sm">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold text-blue-400">
-                    提携プロモーション優待
-                  </span>
+                  <span className="text-xs font-semibold text-blue-400">提携プロモーション優待</span>
                   <span className="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded">
                     有効期限: {landingPage.specialOffer.expiresAt}
                   </span>
@@ -179,15 +170,10 @@ export const LandingPageModal: React.FC = () => {
 
           {/* Key Features */}
           <div className="p-5 space-y-3">
-            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              製品・サービスの特徴
-            </h2>
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">製品・サービスの特徴</h2>
             <div className="grid gap-2.5">
               {landingPage.keyFeatures.map((feat, idx) => (
-                <div 
-                  key={idx} 
-                  className="p-3 rounded-lg bg-slate-950 border border-slate-800 flex items-start gap-3"
-                >
+                <div key={idx} className="p-3 rounded-lg bg-slate-950 border border-slate-800 flex items-start gap-3">
                   <div className="p-1.5 rounded-md bg-slate-900 shrink-0 border border-slate-800">
                     {renderIcon(feat.icon)}
                   </div>
@@ -202,19 +188,13 @@ export const LandingPageModal: React.FC = () => {
 
           {/* User Reviews */}
           <div className="p-5 space-y-3">
-            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              ユーザー評価・導入事例
-            </h2>
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">ユーザー評価・導入事例</h2>
             <div className="space-y-2.5">
               {landingPage.reviews.map((rev, idx) => (
                 <div key={idx} className="p-3 rounded-lg bg-slate-950 border border-slate-800">
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-2">
-                      <img
-                        src={rev.avatar}
-                        alt={rev.name}
-                        className="w-6 h-6 rounded-full object-cover"
-                      />
+                      <img src={rev.avatar} alt={rev.name} className="w-6 h-6 rounded-full object-cover" />
                       <span className="text-xs font-medium text-slate-200">{rev.name}</span>
                     </div>
                     <div className="flex text-amber-400">
@@ -243,7 +223,9 @@ export const LandingPageModal: React.FC = () => {
                     className="w-full p-3 text-left flex items-center justify-between text-xs font-medium text-slate-200 hover:text-white transition-colors"
                   >
                     <span>Q. {faq.q}</span>
-                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${expandedFaqIndex === idx ? 'rotate-180' : ''}`} />
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 text-slate-400 transition-transform ${expandedFaqIndex === idx ? 'rotate-180' : ''}`}
+                    />
                   </button>
                   {expandedFaqIndex === idx && (
                     <div className="px-3 pb-3 text-xs text-slate-400 border-t border-slate-850 pt-2 leading-relaxed">

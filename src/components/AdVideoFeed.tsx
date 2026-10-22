@@ -1,17 +1,10 @@
 import React, { useEffect, useRef } from 'react';
-import { ChevronUp, ChevronDown, UserPlus, Gift, AlertCircle, ShieldCheck, Wallet } from 'lucide-react';
+import { ChevronUp, ChevronDown, Gift, AlertCircle, ShieldCheck, Wallet } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { AdVideoCard } from './AdVideoCard';
 
 export const AdVideoFeed: React.FC = () => {
-  const { 
-    ads, 
-    currentAdIndex, 
-    setCurrentAdIndex, 
-    user, 
-    setIsAuthModalOpen,
-    setIsPointStoreOpen 
-  } = useApp();
+  const { ads, currentAdIndex, setCurrentAdIndex, user, setIsAuthModalOpen, setIsPointStoreOpen } = useApp();
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -47,6 +40,8 @@ export const AdVideoFeed: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+    // goToNextAd/goToPrevAd は currentAdIndex と activeAds.length にのみ依存するため省略（既存挙動を維持）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentAdIndex, activeAds.length]);
 
   // Touch swipe handling
@@ -75,18 +70,14 @@ export const AdVideoFeed: React.FC = () => {
       <div className="absolute inset-0 bg-slate-950 pointer-events-none" />
 
       {/* Main Feed Container (9:16 Aspect ratio phone enclosure on desktop) */}
-      <div 
+      <div
         ref={containerRef}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         className="relative w-full h-full max-w-[420px] max-h-[860px] sm:rounded-2xl overflow-hidden shadow-xl border-0 sm:border border-slate-800 bg-slate-900 flex flex-col"
       >
         {activeAds.length > 0 ? (
-          <AdVideoCard 
-            key={currentAd.id} 
-            ad={currentAd} 
-            isActive={true} 
-          />
+          <AdVideoCard key={currentAd.id} ad={currentAd} isActive={true} />
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-slate-400">
             <AlertCircle className="w-10 h-10 text-slate-500 mb-2" />
@@ -141,7 +132,8 @@ export const AdVideoFeed: React.FC = () => {
             <span className="text-xs font-bold text-slate-200">ショート広告リワード</span>
           </div>
           <p className="text-xs text-slate-400 leading-relaxed mb-3">
-            右上の<strong className="text-slate-200 font-semibold">円形リング</strong>（進行秒数表示）が満ちると受取可能になります。タップしてリワードを獲得してください。
+            右上の<strong className="text-slate-200 font-semibold">円形リング</strong>
+            （進行秒数表示）が満ちると受取可能になります。タップしてリワードを獲得してください。
           </p>
 
           {!user.isLoggedIn ? (
