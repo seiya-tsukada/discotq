@@ -1,7 +1,38 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { AdItem, UserAccount, GiftItem, UserComment, CreatorAccount } from '../types';
+import {
+  AdItem,
+  UserAccount,
+  GiftItem,
+  UserComment,
+  CreatorAccount,
+  NotificationType,
+  PointHistoryEntry,
+} from '../types';
 import { INITIAL_ADS, GIFT_ITEMS, INITIAL_COMMENTS, MOCK_CREATORS } from '../data/mockAds';
+import { LOCAL_STORAGE_KEY_ADS, LOCAL_STORAGE_KEY_USER } from '../constants/storage';
+import { NOTIFICATION_DURATION_MS } from '../constants/timing';
+import {
+  CONFETTI_OPTIONS,
+  DEFAULT_LP_READ_REWARD_POINTS,
+  GIFT_CODE_PREFIX,
+  LEVEL_THRESHOLDS,
+  POINT_HISTORY_DATE_FORMAT,
+  WELCOME_BONUS_POINTS,
+} from '../constants/rewards';
+import {
+  createGuestUser,
+  DEFAULT_LOGIN_EMAIL,
+  DEFAULT_LOGIN_NAME,
+  GUEST_COMMENT_NAME,
+  MEMBER_AVATAR_URL,
+} from '../constants/user';
+import {
+  APPROVED_REVIEW_FEEDBACK,
+  INITIAL_OPTIMIZATION,
+  PENDING_REVIEW_FEEDBACK,
+  REJECTED_REVIEW_FEEDBACK,
+} from '../constants/ads';
 
 interface AppContextType {
   ads: AdItem[];
@@ -19,9 +50,6 @@ interface AppContextType {
   
   isPointStoreOpen: boolean;
   setIsPointStoreOpen: (open: boolean) => void;
-  
-  isAdvertiserPortalOpen: boolean;
-  setIsAdvertiserPortalOpen: (open: boolean) => void;
   
   isAuthModalOpen: boolean;
   setIsAuthModalOpen: (open: boolean) => void;
@@ -56,14 +84,24 @@ interface AppContextType {
   updateAdReviewStatus: (adId: string, reviewStatus: 'approved' | 'rejected', feedback?: string) => void;
   
   // Notifications
-  notification: { message: string; points?: number; type: 'success' | 'info' | 'warning' } | null;
-  showNotification: (message: string, points?: number, type?: 'success' | 'info' | 'warning') => void;
+  notification: { message: string; points?: number; type: NotificationType } | null;
+  showNotification: (message: string, points?: number, type?: NotificationType) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const LOCAL_STORAGE_KEY_USER = 'adtok_user_v3';
-const LOCAL_STORAGE_KEY_ADS = 'adtok_ads_v3';
+const createHistoryEntry = (
+  idPrefix: string,
+  title: string,
+  points: number,
+  type: PointHistoryEntry['type']
+): PointHistoryEntry => ({
+  id: idPrefix + Date.now(),
+  title,
+  points,
+  date: new Date().toLocaleDateString('ja-JP', POINT_HISTORY_DATE_FORMAT),
+  type,
+});
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [ads, setAds] = useState<AdItem[]>(() => {
@@ -86,21 +124,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (e) {
       console.error(e);
     }
-    return {
-      isLoggedIn: false,
-      id: 'guest-' + Math.random().toString(36).substring(2, 9),
-      name: 'ビジターユーザー',
-      email: '',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-      points: 0,
-      totalEarnedPoints: 0,
-      unclaimedGuestPoints: 0,
-      level: 'ブロンズ',
-      watchedAdIds: [],
-      likedAdIds: [],
-      bookmarkedAdIds: [],
-      pointHistory: [],
-    };
+    return createGuestUser();
   });
 
   const [comments, setComments] = useState<Record<string, UserComment[]>>(INITIAL_COMMENTS);
@@ -109,13 +133,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Modals
   const [activeLpAd, setActiveLpAd] = useState<AdItem | null>(null);
   const [isPointStoreOpen, setIsPointStoreOpen] = useState(false);
-  const [isAdvertiserPortalOpen, setIsAdvertiserPortalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // Toast Notifications
-  const [notification, setNotification] = useState<{ message: string; points?: number; type: 'success' | 'info' | 'warning' } | null>(null);
+  const [notification, setNotification] = useState<{ message: string; points?: number; type: NotificationType } | null>(null);
 
   useEffect(() => {
     try {
@@ -133,21 +156,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [ads]);
 
-  const showNotification = (message: string, points?: number, type: 'success' | 'info' | 'warning' = 'success') => {
+  const showNotification = (message: string, points?: number, type: NotificationType = 'success') => {
     setNotification({ message, points, type });
     setTimeout(() => {
       setNotification((prev) => (prev?.message === message ? null : prev));
-    }, 4000);
+    }, NOTIFICATION_DURATION_MS);
   };
 
   const triggerConfetti = () => {
     try {
-      confetti({
-        particleCount: 40,
-        spread: 60,
-        origin: { y: 0.7 },
-        colors: ['#2563EB', '#3B82F6', '#10B981', '#0EA5E9', '#D97706'],
-      });
+      confetti(CONFETTI_OPTIONS);
     } catch {
       // ignore
     }
@@ -201,7 +219,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const newComment: UserComment = {
       id: 'cmt-' + Date.now(),
       adId,
-      userName: user.isLoggedIn ? user.name : 'ビジター',
+      userName: user.isLoggedIn ? user.name : GUEST_COMMENT_NAME,
       userAvatar: user.avatar,
       comment: text,
       likes: 0,
@@ -261,10 +279,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setUser((prev) => {
       const newPoints = prev.points + earnedPoints;
       const newTotal = prev.totalEarnedPoints + earnedPoints;
-      let newLevel = prev.level;
-      if (newTotal >= 2000) newLevel = 'VIP';
-      else if (newTotal >= 800) newLevel = 'ゴールド';
-      else if (newTotal >= 300) newLevel = 'シルバー';
+      const newLevel = LEVEL_THRESHOLDS.find((t) => newTotal >= t.minTotalPoints)?.level ?? prev.level;
 
       return {
         ...prev,
@@ -273,13 +288,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         level: newLevel,
         watchedAdIds: [...prev.watchedAdIds, adId],
         pointHistory: [
-          {
-            id: 'ph-' + Date.now(),
-            title: `視聴リワード: ${ad.brandName}`,
-            points: earnedPoints,
-            date: new Date().toLocaleDateString('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
-            type: 'watch',
-          },
+          createHistoryEntry('ph-', `視聴リワード: ${ad.brandName}`, earnedPoints, 'watch'),
           ...prev.pointHistory,
         ],
       };
@@ -303,7 +312,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return { earned: false, points: 0, isGuest: !user.isLoggedIn };
     }
 
-    const rewardPoints = ad.landingPage.readRewardPoints || 10;
+    const rewardPoints = ad.landingPage.readRewardPoints || DEFAULT_LP_READ_REWARD_POINTS;
 
     if (!user.isLoggedIn) {
       setUser((prev) => ({
@@ -326,13 +335,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       totalEarnedPoints: prev.totalEarnedPoints + rewardPoints,
       watchedAdIds: [...prev.watchedAdIds, lpKey],
       pointHistory: [
-        {
-          id: 'ph-lp-' + Date.now(),
-          title: `サービス詳細閲覧リワード: ${ad.brandName}`,
-          points: rewardPoints,
-          date: new Date().toLocaleDateString('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
-          type: 'lp_read',
-        },
+        createHistoryEntry('ph-lp-', `サービス詳細閲覧リワード: ${ad.brandName}`, rewardPoints, 'lp_read'),
         ...prev.pointHistory,
       ],
     }));
@@ -358,19 +361,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
     }
 
-    const generatedCode = 'ADTOK-' + Math.random().toString(36).substring(2, 6).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+    const generatedCode = GIFT_CODE_PREFIX + '-' + Math.random().toString(36).substring(2, 6).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
 
     setUser((prev) => ({
       ...prev,
       points: prev.points - gift.pointsCost,
       pointHistory: [
-        {
-          id: 'ph-ex-' + Date.now(),
-          title: `リワード交換: ${gift.name}`,
-          points: -gift.pointsCost,
-          date: new Date().toLocaleDateString('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
-          type: 'exchange',
-        },
+        createHistoryEntry('ph-ex-', `リワード交換: ${gift.name}`, -gift.pointsCost, 'exchange'),
         ...prev.pointHistory,
       ],
     }));
@@ -386,27 +383,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Auth
-  const login = (email = 'user@business.example.com', name = 'ビジネスメンバー') => {
+  const login = (email = DEFAULT_LOGIN_EMAIL, name = DEFAULT_LOGIN_NAME) => {
     const pooledPoints = user.unclaimedGuestPoints;
-    const initialBonus = pooledPoints > 0 ? pooledPoints : 30;
+    const initialBonus = pooledPoints > 0 ? pooledPoints : WELCOME_BONUS_POINTS;
 
     setUser((prev) => ({
       ...prev,
       isLoggedIn: true,
       name,
       email,
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
+      avatar: MEMBER_AVATAR_URL,
       points: prev.points + initialBonus,
       totalEarnedPoints: prev.totalEarnedPoints + initialBonus,
       unclaimedGuestPoints: 0,
       pointHistory: [
-        {
-          id: 'ph-login-' + Date.now(),
-          title: pooledPoints > 0 ? `ビジター視聴プール分の受取 (${pooledPoints}pt)` : 'アカウント開設ウェルカムポイント (+30pt)',
-          points: initialBonus,
-          date: new Date().toLocaleDateString('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
-          type: 'bonus',
-        },
+        createHistoryEntry('ph-login-', pooledPoints > 0 ? `ビジター視聴プール分の受取 (${pooledPoints}pt)` : `アカウント開設ウェルカムポイント (+${WELCOME_BONUS_POINTS}pt)`, initialBonus, 'bonus'),
         ...prev.pointHistory,
       ],
     }));
@@ -421,21 +412,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const logout = () => {
-    setUser({
-      isLoggedIn: false,
-      id: 'guest-' + Math.random().toString(36).substring(2, 9),
-      name: 'ビジターユーザー',
-      email: '',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-      points: 0,
-      totalEarnedPoints: 0,
-      unclaimedGuestPoints: 0,
-      level: 'ブロンズ',
-      watchedAdIds: [],
-      likedAdIds: [],
-      bookmarkedAdIds: [],
-      pointHistory: [],
-    });
+    setUser(createGuestUser());
     showNotification('ログアウトしました（ビジターモード）', undefined, 'info');
   };
 
@@ -464,21 +441,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       commentsCount: 0,
       sharesCount: 0,
       reviewStatus: 'pending', // Submitted to admin review
-      reviewFeedback: 'プラットフォーム運営者による初回審査待ちです。通常数分以内に確認されます。',
-      optimization: {
-        creativeScore: 82,
-        hookRate: 68,
-        retentionCurve: [100, 80, 68, 62, 58, 55],
-        benchmarkComparison: '同カテゴリ基準値内',
-        suggestedImprovements: [
-          {
-            type: 'hook',
-            title: '冒頭テロップの視認性向上',
-            description: '動画開始直後のメッセージを簡潔にまとめると、離脱を低減できます。',
-            expectedLift: '完走率 +5%',
-          },
-        ],
-      },
+      reviewFeedback: PENDING_REVIEW_FEEDBACK,
+      optimization: INITIAL_OPTIMIZATION,
       createdAt: new Date().toISOString().split('T')[0],
     };
 
@@ -516,7 +480,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           return {
             ...ad,
             reviewStatus,
-            reviewFeedback: feedback || (reviewStatus === 'approved' ? '公認基準をクリアし、フィード配信承認されました。' : '表現ガイドラインに基づき差戻しされました。修正の上再提出してください。'),
+            reviewFeedback: feedback || (reviewStatus === 'approved' ? APPROVED_REVIEW_FEEDBACK : REJECTED_REVIEW_FEEDBACK),
             status: reviewStatus === 'approved' ? 'active' : 'paused',
           };
         }
@@ -545,8 +509,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         closeLpModal,
         isPointStoreOpen,
         setIsPointStoreOpen,
-        isAdvertiserPortalOpen,
-        setIsAdvertiserPortalOpen,
         isAuthModalOpen,
         setIsAuthModalOpen,
         isCommentsModalOpen,

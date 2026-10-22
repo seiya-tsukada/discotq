@@ -20,6 +20,15 @@ import {
 } from 'lucide-react';
 import { AdItem } from '../types';
 import { useApp } from '../context/AppContext';
+import {
+  CENTER_ICON_DURATION_MS,
+  CLAIM_EFFECT_DURATION_MS,
+  DOUBLE_TAP_DELAY_MS,
+  WATCH_TIMER_INTERVAL_MS,
+} from '../constants/timing';
+
+const RING_RADIUS = 20;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 interface AdVideoCardProps {
   ad: AdItem;
@@ -89,7 +98,7 @@ export const AdVideoCard: React.FC<AdVideoCardProps> = ({ ad, isActive }) => {
 
     const interval = setInterval(() => {
       setWatchSeconds((prev) => {
-        const next = prev + 0.1;
+        const next = prev + WATCH_TIMER_INTERVAL_MS / 1000;
         if (next >= ad.minWatchSeconds && !hasCompletedWatch) {
           setHasCompletedWatch(true);
           if (user.isLoggedIn) {
@@ -100,7 +109,7 @@ export const AdVideoCard: React.FC<AdVideoCardProps> = ({ ad, isActive }) => {
         }
         return next;
       });
-    }, 100);
+    }, WATCH_TIMER_INTERVAL_MS);
 
     return () => clearInterval(interval);
   }, [isActive, hasCompletedWatch, ad.minWatchSeconds, ad.id, user.isLoggedIn]);
@@ -109,18 +118,16 @@ export const AdVideoCard: React.FC<AdVideoCardProps> = ({ ad, isActive }) => {
     claimAdWatchReward(ad.id);
     setIsClaimed(true);
     setShowClaimPrompt(false);
-    // Trigger exclusive reward received effect!
     setJustClaimedEffect(true);
     setTimeout(() => {
       setJustClaimedEffect(false);
-    }, 2800);
+    }, CLAIM_EFFECT_DURATION_MS);
   };
 
   const handleScreenClick = () => {
     const now = Date.now();
-    const DOUBLE_TAP_DELAY = 300;
 
-    if (now - lastTapTime < DOUBLE_TAP_DELAY) {
+    if (now - lastTapTime < DOUBLE_TAP_DELAY_MS) {
       if (!isLiked) {
         toggleLikeAd(ad.id);
       }
@@ -145,7 +152,7 @@ export const AdVideoCard: React.FC<AdVideoCardProps> = ({ ad, isActive }) => {
     setShowCenterIcon(type);
     setTimeout(() => {
       setShowCenterIcon(null);
-    }, 500);
+    }, CENTER_ICON_DURATION_MS);
   };
 
   const toggleSound = (e: React.MouseEvent) => {
@@ -172,8 +179,6 @@ export const AdVideoCard: React.FC<AdVideoCardProps> = ({ ad, isActive }) => {
 
   // Ring progress calculations
   const progressRatio = Math.min(1, watchSeconds / ad.minWatchSeconds);
-  const RING_RADIUS = 20;
-  const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
   const strokeDashoffset = RING_CIRCUMFERENCE - (progressRatio * RING_CIRCUMFERENCE);
   const remainingSeconds = Math.max(0, Math.ceil(ad.minWatchSeconds - watchSeconds));
 

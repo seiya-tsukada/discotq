@@ -24,28 +24,16 @@ import {
   Info
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { AdItem, AdLandingPage } from '../../types';
-
-const PRESET_CREATIVES = [
-  {
-    name: '製品・ハードウェア (高精細動画)',
-    url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-    poster: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80',
-    category: 'ガジェット・家電' as const,
-  },
-  {
-    name: 'ビジネスIT・SaaS (アニメーション)',
-    url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
-    poster: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=80',
-    category: 'ガジェット・家電' as const,
-  },
-  {
-    name: 'ライフスタイル・ウェルネス',
-    url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4',
-    poster: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800&auto=format&fit=crop&q=80',
-    category: 'グルメ・食品' as const,
-  },
-];
+import { AdCategory, AdItem, AdLandingPage } from '../../types';
+import {
+  CREATOR_FORM_DEFAULTS,
+  DEFAULT_COUPON_CODE,
+  DEFAULT_MIN_WATCH_SECONDS,
+  DEFAULT_OFFER_EXPIRES_AT,
+  PRESET_CREATIVES,
+} from '../../constants/ads';
+import { DEFAULT_LP_READ_REWARD_POINTS } from '../../constants/rewards';
+import { AD_SUBMIT_DELAY_MS } from '../../constants/timing';
 
 export const CreatorPortal: React.FC = () => {
   const { ads, createNewAd, updateAdCreative, toggleAdStatus, deleteAd } = useApp();
@@ -53,20 +41,20 @@ export const CreatorPortal: React.FC = () => {
   const [selectedAdForEdit, setSelectedAdForEdit] = useState<AdItem | null>(null);
 
   // Form State
-  const [brandName, setBrandName] = useState('BOTANICAL LAB Tokyo');
-  const [brandLogo, setBrandLogo] = useState('https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=100&auto=format&fit=crop&q=80');
+  const [brandName, setBrandName] = useState(CREATOR_FORM_DEFAULTS.brandName);
+  const [brandLogo, setBrandLogo] = useState(CREATOR_FORM_DEFAULTS.brandLogo);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState<'コスメ・美容' | 'ガジェット・家電' | 'グルメ・食品' | 'アプリ・ゲーム' | 'ライフスタイル・旅行' | 'ファッション'>('コスメ・美容');
-  const [tags, setTags] = useState('#新作 #おすすめ #限定優待');
+  const [category, setCategory] = useState<AdCategory>(CREATOR_FORM_DEFAULTS.category);
+  const [tags, setTags] = useState(CREATOR_FORM_DEFAULTS.tags);
   const [videoUrl, setVideoUrl] = useState(PRESET_CREATIVES[0].url);
   const [posterUrl, setPosterUrl] = useState(PRESET_CREATIVES[0].poster);
-  const [ctaText, setCtaText] = useState('公式サイトで詳細・仕様を見る');
-  const [rewardPoints, setRewardPoints] = useState(20);
-  const [budget, setBudget] = useState(50000);
-  const [externalUrl, setExternalUrl] = useState('https://example.com/official-offer');
-  const [couponCode, setCouponCode] = useState('ADTOK-OFFER');
-  const [discountText, setDiscountText] = useState('公式ストア限定 20% 優待適用');
+  const [ctaText, setCtaText] = useState(CREATOR_FORM_DEFAULTS.ctaText);
+  const [rewardPoints, setRewardPoints] = useState(CREATOR_FORM_DEFAULTS.rewardPoints);
+  const [budget, setBudget] = useState(CREATOR_FORM_DEFAULTS.budget);
+  const [externalUrl, setExternalUrl] = useState(CREATOR_FORM_DEFAULTS.externalUrl);
+  const [couponCode, setCouponCode] = useState(CREATOR_FORM_DEFAULTS.couponCode);
+  const [discountText, setDiscountText] = useState(CREATOR_FORM_DEFAULTS.discountText);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
 
@@ -78,11 +66,11 @@ export const CreatorPortal: React.FC = () => {
       // Create local object URL for preview
       const objectUrl = URL.createObjectURL(file);
       setVideoUrl(objectUrl);
-      setPosterUrl('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80');
+      setPosterUrl(CREATOR_FORM_DEFAULTS.uploadedPosterUrl);
     }
   };
 
-  const handleSelectPreset = (preset: typeof PRESET_CREATIVES[0]) => {
+  const handleSelectPreset = (preset: (typeof PRESET_CREATIVES)[number]) => {
     setVideoUrl(preset.url);
     setPosterUrl(preset.poster);
     setCategory(preset.category);
@@ -107,9 +95,9 @@ export const CreatorPortal: React.FC = () => {
         { title: '高いユーザー満足度', desc: 'ユーザーアンケートで95%以上の高評価を獲得', icon: 'Star' },
       ],
       specialOffer: {
-        couponCode: couponCode || 'ADTOK2026',
+        couponCode: couponCode || DEFAULT_COUPON_CODE,
         discount: discountText || '特別優待適用',
-        expiresAt: '2026年12月末まで',
+        expiresAt: DEFAULT_OFFER_EXPIRES_AT,
       },
       reviews: [
         { name: '公式導入ユーザー', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&auto=format&fit=crop&q=80', rating: 5, comment: '動画広告で要点が分かりやすく、スムーズに利用できました。' },
@@ -117,9 +105,9 @@ export const CreatorPortal: React.FC = () => {
       faqs: [
         { q: '利用開始の手続きについて', a: '公式ウェブサイトより最短3分でお手続き可能です。' },
       ],
-      externalUrl: externalUrl || 'https://example.com',
+      externalUrl: externalUrl || CREATOR_FORM_DEFAULTS.fallbackExternalUrl,
       ctaButtonText: '公式サイトで詳細を確認する',
-      readRewardPoints: 10,
+      readRewardPoints: DEFAULT_LP_READ_REWARD_POINTS,
     };
 
     const formattedTags = tags
@@ -134,27 +122,27 @@ export const CreatorPortal: React.FC = () => {
         verified: true,
         title,
         description,
-        tags: formattedTags.length > 0 ? formattedTags : ['#公式プロモーション'],
+        tags: formattedTags.length > 0 ? formattedTags : [CREATOR_FORM_DEFAULTS.fallbackTag],
         videoUrl,
         posterUrl,
         category,
         ctaText,
         ctaType: 'primary',
         rewardPoints: Number(rewardPoints),
-        minWatchSeconds: 5,
+        minWatchSeconds: DEFAULT_MIN_WATCH_SECONDS,
         soundName: `${brandName} Official Brand Audio`,
         soundAuthor: `${brandName} Sound Studio`,
         landingPage,
-        advertiserId: 'creator-current',
+        advertiserId: CREATOR_FORM_DEFAULTS.advertiserId,
         creatorName: brandName,
-        creatorEmail: 'creator@business.example.com',
+        creatorEmail: CREATOR_FORM_DEFAULTS.creatorEmail,
         totalBudget: budget,
         status: 'paused', // initially paused until approved
       });
 
       setIsSubmitting(false);
       setActiveTab('dashboard');
-    }, 600);
+    }, AD_SUBMIT_DELAY_MS);
   };
 
   // Metrics for creator
