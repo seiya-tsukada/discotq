@@ -1,2 +1,6 @@
 dist
 bun.lock
+.venv
+backend
+api
+supabase

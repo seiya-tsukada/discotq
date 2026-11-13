@@ -23,8 +23,8 @@ export default tseslint.config(
     },
   },
   {
-    // Provider と useApp フックを同じファイルで公開しているため除外
-    files: ['src/context/AppContext.tsx'],
+    // Provider とフック / ルーターのコンポーネントとヘルパーを同じファイルで公開しているため除外
+    files: ['src/context/AppContext.tsx', 'src/context/AuthContext.tsx', 'src/router.tsx'],
     rules: { 'react-refresh/only-export-components': 'off' },
   }
 );

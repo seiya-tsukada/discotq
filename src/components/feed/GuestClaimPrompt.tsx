@@ -22,7 +22,7 @@ export const GuestClaimPrompt: React.FC<GuestClaimPromptProps> = ({ rewardPoints
             <div className="flex items-center gap-1.5">
               <span className="text-xs font-bold text-white">+{rewardPoints}pt がウォレットに待機中</span>
             </div>
-            <p className="text-[11px] text-slate-400">ワンタップで確定し、ギフト券交換へ保存</p>
+            <p className="text-[11px] text-slate-400">ログインすると受け取ってギフト券と交換できます</p>
           </div>
         </div>
 

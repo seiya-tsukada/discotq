@@ -5,3 +5,14 @@ coverage/
 .DS_Store
 *.log
 .env*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+
+# Vercel
+.vercel

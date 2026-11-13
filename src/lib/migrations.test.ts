@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { INITIAL_ADS } from '../data/mockAds';
-import { migrateStorageKey, renameLegacyCoupons, runStorageMigrations } from './migrations';
+import { migrateStorageKey, runStorageMigrations } from './migrations';
 
 const createMemoryStorage = () => {
   const store = new Map<string, string>();
@@ -44,38 +43,17 @@ describe('migrateStorageKey', () => {
   });
 });
 
-describe('renameLegacyCoupons', () => {
-  const withCoupon = (couponCode: string) => {
-    const ad = INITIAL_ADS.find((a) => a.landingPage.specialOffer)!;
-    return { ...ad, landingPage: { ...ad.landingPage, specialOffer: { ...ad.landingPage.specialOffer!, couponCode } } };
-  };
-
-  it('プラットフォーム発行の旧クーポンを置き換える', () => {
-    const [ad] = renameLegacyCoupons([withCoupon('ADTOK-REPAIR20')]);
-    expect(ad.landingPage.specialOffer?.couponCode).toBe('DISCOTQ-REPAIR20');
-  });
-
-  it('独自入力のクーポンはそのまま残す', () => {
-    const [ad] = renameLegacyCoupons([withCoupon('MY-SHOP-10')]);
-    expect(ad.landingPage.specialOffer?.couponCode).toBe('MY-SHOP-10');
-  });
-});
-
 describe('runStorageMigrations', () => {
-  it('ユーザーと広告データを新キーへ移行する', () => {
-    const ad = INITIAL_ADS.find((a) => a.landingPage.specialOffer)!;
-    const legacyAd = {
-      ...ad,
-      landingPage: { ...ad.landingPage, specialOffer: { ...ad.landingPage.specialOffer!, couponCode: 'ADTOK2026' } },
-    };
+  it('ユーザーデータを新キーへ移行し、広告モックのデータを削除する', () => {
     storage.setItem('adtok_user_v3', JSON.stringify({ points: 120 }));
-    storage.setItem('adtok_ads_v3', JSON.stringify([legacyAd]));
+    storage.setItem('adtok_ads_v3', '[]');
+    storage.setItem('discotq_ads_v3', '[]');
 
     runStorageMigrations();
 
     expect(JSON.parse(storage.getItem('discotq_user_v3')!)).toEqual({ points: 120 });
-    expect(JSON.parse(storage.getItem('discotq_ads_v3')!)[0].landingPage.specialOffer.couponCode).toBe('DISCOTQ2026');
     expect(storage.getItem('adtok_user_v3')).toBeNull();
     expect(storage.getItem('adtok_ads_v3')).toBeNull();
+    expect(storage.getItem('discotq_ads_v3')).toBeNull();
   });
 });

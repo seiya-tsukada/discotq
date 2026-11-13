@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { calcLevel, createHistoryEntry, generateGiftCode, lpReadKey, toggleId } from './user';
+import { calcLevel, createHistoryEntry, generateGiftCode, toggleId } from './user';
 
 describe('calcLevel', () => {
   it('累計ポイントに応じてレベルが上がる', () => {
@@ -33,11 +33,5 @@ describe('createHistoryEntry', () => {
     expect(entry.id).toMatch(/^ph-ex-\d+$/);
     expect(entry).toMatchObject({ title: 'リワード交換: テスト', points: -100, type: 'exchange' });
     expect(entry.date).not.toBe('');
-  });
-});
-
-describe('lpReadKey', () => {
-  it('LP 閲覧済みキーを返す', () => {
-    expect(lpReadKey('ad-1')).toBe('lp-ad-1');
   });
 });
