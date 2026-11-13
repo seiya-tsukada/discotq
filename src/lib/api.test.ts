@@ -74,3 +74,42 @@ describe('request', () => {
     expect(err.code).toBe('network_error');
   });
 });
+
+describe('request のエラーID', () => {
+  it('API のエラー応答の request_id をメッセージに含める', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response(
+            JSON.stringify({
+              error: { code: 'db_unavailable', message: 'DBに接続できません', request_id: 'hnd1::abc' },
+            }),
+            { status: 503 }
+          )
+        )
+    );
+    const err = (await request('GET', '/videos/feed').catch((e: unknown) => e)) as ApiError;
+    expect(err.code).toBe('db_unavailable');
+    expect(err.requestId).toBe('hnd1::abc');
+    expect(err.message).toBe('DBに接続できません（エラーID: hnd1::abc）');
+  });
+
+  it('Vercel 自身のエラー（関数の起動失敗）も ID 付きで表示する', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response('A server error has occurred', {
+          status: 500,
+          headers: { 'x-vercel-error': 'FUNCTION_INVOCATION_FAILED', 'x-vercel-id': 'hnd1::k5cp4-1' },
+        })
+      )
+    );
+    const err = (await request('GET', '/videos/feed').catch((e: unknown) => e)) as ApiError;
+    expect(err.code).toBe('function_invocation_failed');
+    expect(err.message).toBe(
+      'サーバーが応答できませんでした (500 FUNCTION_INVOCATION_FAILED)（エラーID: hnd1::k5cp4-1）'
+    );
+  });
+});

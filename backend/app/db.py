@@ -7,6 +7,7 @@ transaction pooler は prepared statement を扱えないので ``prepare_thresh
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterator
 from typing import Any
 
@@ -14,13 +15,26 @@ import psycopg
 from psycopg.rows import dict_row
 
 from backend.app.config import get_settings
+from backend.app.observability import describe_db_target
+
+logger = logging.getLogger("discotq.db")
 
 Conn = psycopg.Connection[dict[str, Any]]
 
 
-def connect(database_url: str | None = None) -> Conn:
+def connect(database_url: str | None = None, *, timeout_s: int = 10) -> Conn:
     url = database_url or get_settings().database_url.get_secret_value()
-    return psycopg.connect(url, prepare_threshold=None, row_factory=dict_row, connect_timeout=10)
+    try:
+        return psycopg.connect(
+            url, prepare_threshold=None, row_factory=dict_row, connect_timeout=timeout_s
+        )
+    except psycopg.OperationalError as e:
+        logger.error(
+            "db_connect_failed target=%s error=%s",
+            describe_db_target(url),
+            " ".join(str(e).split())[:500],
+        )
+        raise
 
 
 def ping(timeout_s: int = 3) -> None:
@@ -30,10 +44,7 @@ def ping(timeout_s: int = 3) -> None:
     を実行する。待ち続けることもデータを変更することもない。
     """
     timeout_s = int(timeout_s)
-    url = get_settings().database_url.get_secret_value()
-    with psycopg.connect(
-        url, prepare_threshold=None, row_factory=dict_row, connect_timeout=timeout_s
-    ) as conn:
+    with connect(timeout_s=timeout_s) as conn:
         conn.read_only = True
         conn.execute(f"set local statement_timeout = '{timeout_s}s'")
         conn.execute("select 1").fetchone()

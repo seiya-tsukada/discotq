@@ -141,23 +141,26 @@ bun run test   # Vitest
 
 フロント（Vite）と FastAPI を同一プロジェクトでデプロイします（`vercel.json` 参照）。Project Settings > Environment Variables に以下を設定します。
 
-| 変数                                                          | 例・説明                                        |
-| ------------------------------------------------------------- | ----------------------------------------------- |
-| `R2_ACCOUNT_ID` / `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` | R2 の API トークン                              |
-| `R2_BUCKET_PRIVATE` / `R2_BUCKET_PUBLIC`                      | `discotq-private` / `discotq-public`            |
-| `R2_PUBLIC_BASE_URL`                                          | `https://media.example.com`                     |
-| `DATABASE_URL`                                                | transaction pooler（6543）                      |
-| `MAX_UPLOAD_BYTES` / `MAX_VIDEO_DURATION_SEC`                 | `104857600` / `180`                             |
-| `ANON_DAILY_UPLOAD_LIMIT`                                     | `5`                                             |
-| `CORS_ALLOWED_ORIGINS`                                        | 同一ドメインなら空で可                          |
-| `APP_BASE_URL`                                                | `https://discotq.example.com`（メール内リンク） |
-| `IP_HASH_SALT`                                                | ランダムな長い文字列                            |
-| `EMAIL_BACKEND` / `RESEND_API_KEY` / `EMAIL_FROM`             | `resend` / Resend の API キー / 送信元          |
-| `VITE_API_BASE_URL`                                           | 同一ドメインなら空                              |
+| 変数                                                          | 例・説明                               |
+| ------------------------------------------------------------- | -------------------------------------- |
+| `R2_ACCOUNT_ID` / `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` | R2 の API トークン                     |
+| `R2_BUCKET_PRIVATE` / `R2_BUCKET_PUBLIC`                      | `discotq-private` / `discotq-public`   |
+| `R2_PUBLIC_BASE_URL`                                          | `https://media.example.com`            |
+| `DATABASE_URL`                                                | transaction pooler（6543）             |
+| `CORS_ALLOWED_ORIGINS`                                        | 同一ドメインなら空で可                 |
+| `EMAIL_BACKEND` / `RESEND_API_KEY` / `EMAIL_FROM`             | `resend` / Resend の API キー / 送信元 |
+| `VITE_API_BASE_URL`                                           | 同一ドメインなら空                     |
 
 **`VITE_` で始まる変数はフロントの JS に埋め込まれ公開されます。秘密情報には絶対に `VITE_` を付けないでください。**
 
-プレビュー環境では `APP_BASE_URL` をプレビュー URL に合わせるか、メールのリンク先が本番になることに注意してください。
+次の値はコードに既定値を持っているため、設定は不要です（必要なときだけ同名の環境変数で上書きできます）。
+
+| 項目                                                  | 既定値                                                                                   |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `MAX_UPLOAD_BYTES` / `MAX_VIDEO_DURATION_SEC`         | `104857600`（100MB）/ `180`                                                              |
+| `ANON_DAILY_UPLOAD_LIMIT` / `USER_DAILY_UPLOAD_LIMIT` | `5` / `50`                                                                               |
+| `APP_BASE_URL`（メール内リンク）                      | `https://discotq.vercel.app`。プレビュー環境でもリンク先は本番になります                 |
+| IP ハッシュのソルト                                   | `DATABASE_URL` から HMAC で自動導出。DB のパスワードを変えるとレート制限の集計がリセット |
 
 ## 死活監視
 
@@ -166,7 +169,26 @@ bun run test   # Vitest
 | `GET /api/health`       | liveness。DB に接続しない。`{"status": "ok", "email": "<EMAIL_BACKEND>"}`                            |
 | `GET /api/health/ready` | readiness。READ ONLY・タイムアウト 3 秒で `select 1` を実行し、通れば `200`、DB に届かなければ `503` |
 
-必須の環境変数が欠けていると API は起動時に停止するため、`/api/health` も `500` になります。その場合は Vercel の Function ログに、不足している変数名が pydantic の `ValidationError` として出力されます。
+必須の環境変数が欠けていると API は起動時に停止するため、`/api/health` も `500 FUNCTION_INVOCATION_FAILED` になります。原因は次のログで確認できます。
+
+## ログ（Vercel の Function ログ）
+
+Vercel のダッシュボードで Project > Logs（または Deployments > 対象 > Logs）を開くと確認できます。画面のエラーに出る「エラーID」（`x-vercel-id`）でログを検索できます。
+
+| ログ（先頭の文字列）                                              | 意味・対処                                                                                                     |
+| ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `config_error ... R2_ACCOUNT_ID: 未設定`                          | 起動時の設定エラー。不足・不正な環境変数名が並ぶ（値は出力しない）                                             |
+| `startup db=... r2_endpoint=...`                                  | 起動成功。接続先（パスワード抜き）・メール方式など                                                             |
+| `config_warning ...`                                              | DATABASE_URL の典型的な設定ミス（直接接続ホスト・6543 以外のポート・pooler のユーザー名に project-ref が無い） |
+| `GET /api/videos/feed -> 503 (12ms) request_id=...`               | 1 リクエスト 1 行のアクセスログ（4xx は WARNING、5xx は ERROR）                                                |
+| `db_connect_failed target=... error=...` / `db_unavailable`       | DB に接続できない（接続先・libpq のエラー内容）。応答は `503 db_unavailable`                                   |
+| `db_error sqlstate=42P01 ... hint=...init.sql を適用してください` | テーブルが無い（init.sql 未適用）などの DB エラー。応答は `500 db_error`                                       |
+| `storage_error operation=CopyObject code=AccessDenied`            | R2 のエラー（権限・バケット名・エンドポイント）。応答は `502 storage_error`                                    |
+| `email_error` / `Resend API error`                                | メール送信の失敗。応答は `502 email_error`                                                                     |
+| `unhandled_error ...`（スタックトレース付き）                     | 想定外の例外。応答は `500 internal_error`                                                                      |
+| `api_error code=rate_limited ...`                                 | 想定内のエラー（入力不正・権限・レート制限など）の理由コード                                                   |
+
+ログレベルは `LOG_LEVEL`（既定 `INFO`）で変更できます。パスワード・トークン・DATABASE_URL の値・メールアドレス・生の IP アドレスはログに出力しません。
 
 ## 動画ファイルの推奨形式（faststart）
 

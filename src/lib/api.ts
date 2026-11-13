@@ -25,7 +25,9 @@ export class ApiError extends Error {
     readonly status: number,
     readonly code: string,
     message: string,
-    readonly details?: unknown
+    readonly details?: unknown,
+    // Vercel の Function ログを検索するための ID（x-vercel-id）
+    readonly requestId?: string
   ) {
     super(message);
     this.name = 'ApiError';
@@ -72,12 +74,22 @@ export const request = async <T>(
   const text = await res.text();
   const data: unknown = text ? safeJson(text) : null;
   if (!res.ok) {
-    const err = (data as { error?: { code?: string; message?: string; details?: unknown } } | null)?.error;
+    const err = (data as { error?: { code?: string; message?: string; details?: unknown; request_id?: string } } | null)
+      ?.error;
+    const requestId = err?.request_id ?? res.headers.get('x-request-id') ?? res.headers.get('x-vercel-id') ?? undefined;
+    // API が起動できない場合などは Vercel 自身のエラー（例: FUNCTION_INVOCATION_FAILED）が返る
+    const platformError = res.headers.get('x-vercel-error');
+    const base =
+      err?.message ??
+      (platformError
+        ? `サーバーが応答できませんでした (${res.status} ${platformError})`
+        : `エラーが発生しました (${res.status})`);
     throw new ApiError(
       res.status,
-      err?.code ?? 'http_error',
-      err?.message ?? `エラーが発生しました (${res.status})`,
-      err?.details
+      err?.code ?? platformError?.toLowerCase() ?? 'http_error',
+      requestId ? `${base}（エラーID: ${requestId}）` : base,
+      err?.details,
+      requestId
     );
   }
   return data as T;
