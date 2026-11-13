@@ -65,3 +65,10 @@ class VideoStorage(Protocol):
         ...
 
     def public_url(self, key: str) -> str: ...
+
+    def check(self, *, timeout_s: int = 3) -> dict[str, str]:
+        """接続確認。項目ごとに "ok" か失敗理由のコードを返す（書き込みは行わない）。
+
+        R2 の場合は ``private`` / ``public`` バケットと ``public_url``（公開ドメイン）を確認する。
+        """
+        ...

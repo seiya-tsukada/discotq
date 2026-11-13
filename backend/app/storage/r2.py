@@ -2,13 +2,22 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Any
 from urllib.parse import quote
 
 import boto3
+import httpx
 from botocore.config import Config
-from botocore.exceptions import ClientError
+from botocore.exceptions import (
+    BotoCoreError,
+    ClientError,
+    ConnectTimeoutError,
+    EndpointConnectionError,
+    NoCredentialsError,
+    ReadTimeoutError,
+)
 
 from backend.app.storage.base import ObjectInfo, PresignedUpload
 
@@ -17,6 +26,8 @@ if TYPE_CHECKING:
 
 
 PUBLIC_CACHE_CONTROL = "public, max-age=3600"
+
+logger = logging.getLogger("discotq.storage")
 
 
 class R2Storage:
@@ -34,6 +45,10 @@ class R2Storage:
         self._private_bucket = private_bucket
         self._public_bucket = public_bucket
         self._public_base_url = public_base_url.rstrip("/")
+        self._endpoint_url = endpoint_url
+        self._access_key_id = access_key_id
+        self._secret_access_key = secret_access_key
+        self._injected_client = client
         self._client: S3Client = client or boto3.client(
             "s3",
             endpoint_url=endpoint_url,
@@ -115,3 +130,74 @@ class R2Storage:
 
     def public_url(self, key: str) -> str:
         return f"{self._public_base_url}/{quote(key)}"
+
+    # ---------------------------------------------------------------- 接続確認
+
+    def check(self, *, timeout_s: int = 3) -> dict[str, str]:
+        """両バケットへの読み取り（ListObjectsV2, MaxKeys=1）と公開ドメインへの到達を確認する。"""
+        client = self._check_client(timeout_s)
+        return {
+            "private": self._check_bucket(client, "private", self._private_bucket),
+            "public": self._check_bucket(client, "public", self._public_bucket),
+            "public_url": self._check_public_url(timeout_s),
+        }
+
+    def _check_client(self, timeout_s: int) -> S3Client:
+        # 通常のクライアントはリトライ 3 回・長めのタイムアウトなので、確認用は短くした別クライアントを使う
+        if self._injected_client is not None:
+            return self._injected_client
+        return boto3.client(
+            "s3",
+            endpoint_url=self._endpoint_url,
+            region_name="auto",
+            aws_access_key_id=self._access_key_id,
+            aws_secret_access_key=self._secret_access_key,
+            config=Config(
+                signature_version="s3v4",
+                connect_timeout=timeout_s,
+                read_timeout=timeout_s,
+                retries={"max_attempts": 1, "mode": "standard"},
+            ),
+        )
+
+    def _check_bucket(self, client: S3Client, label: str, bucket: str) -> str:
+        try:
+            client.list_objects_v2(Bucket=bucket, MaxKeys=1)
+            return "ok"
+        except ClientError as e:
+            err: Any = e.response.get("Error", {})
+            code = str(err.get("Code") or "client_error")
+            detail = err.get("Message")
+        except EndpointConnectionError as e:
+            code, detail = "endpoint_unreachable", str(e)
+        except (ConnectTimeoutError, ReadTimeoutError) as e:
+            code, detail = "timeout", str(e)
+        except NoCredentialsError as e:
+            code, detail = "no_credentials", str(e)
+        except BotoCoreError as e:
+            code, detail = type(e).__name__, str(e)
+        logger.warning(
+            "storage_check_failed target=%s bucket=%s endpoint=%s code=%s detail=%s",
+            label,
+            bucket,
+            self._endpoint_url,
+            code,
+            detail,
+        )
+        return code
+
+    def _check_public_url(self, timeout_s: int) -> str:
+        """公開ドメインに HTTP で到達できるか。ルートは 404 などになり得るので 5xx 以外を到達とみなす。"""
+        url = f"{self._public_base_url}/"
+        try:
+            res = httpx.head(url, timeout=timeout_s, follow_redirects=False)
+        except httpx.TimeoutException as e:
+            code, detail = "timeout", str(e)
+        except httpx.HTTPError as e:
+            code, detail = "unreachable", f"{type(e).__name__}: {e}"
+        else:
+            if res.status_code < 500:
+                return "ok"
+            code, detail = f"http_{res.status_code}", res.reason_phrase
+        logger.warning("storage_check_failed target=public_url url=%s code=%s detail=%s", url, code, detail)
+        return code
