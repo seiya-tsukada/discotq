@@ -73,7 +73,7 @@ def client_ip(request: Request) -> str | None:
 
 
 def get_ip_hash(request: Request, settings: SettingsDep) -> str | None:
-    return hash_ip(client_ip(request), settings.ip_hash_salt.get_secret_value())
+    return hash_ip(client_ip(request), settings.ip_hash_salt)
 
 
 def get_anonymous_id(request: Request) -> UUID | None:
@@ -153,7 +153,7 @@ def start_session(
         user_id=user_id,
         token_hash=sha256_hex(token),
         expires_at=datetime.now(UTC) + timedelta(days=settings.session_ttl_days),
-        ip_hash=hash_ip(client_ip(request), settings.ip_hash_salt.get_secret_value()),
+        ip_hash=hash_ip(client_ip(request), settings.ip_hash_salt),
         user_agent=request.headers.get("user-agent"),
     )
     response.set_cookie(

@@ -38,7 +38,6 @@ os.environ.update(
         "USER_DAILY_UPLOAD_LIMIT": "5",
         "CORS_ALLOWED_ORIGINS": "http://localhost:3000",
         "APP_BASE_URL": "http://localhost:3000",
-        "IP_HASH_SALT": "test-salt",
         "SESSION_COOKIE_SECURE": "false",
         "EMAIL_BACKEND": "console",
         "AWS_DEFAULT_REGION": "us-east-1",
