@@ -1,9 +1,8 @@
 import React from 'react';
 import confetti from 'canvas-confetti';
-import { AdItem, GiftItem, UserAccount } from '../../types';
-import { CONFETTI_OPTIONS, DEFAULT_LP_READ_REWARD_POINTS } from '../../constants/rewards';
-import { recordClick, recordView, updateAdById } from '../../lib/ads';
-import { calcLevel, createHistoryEntry, generateGiftCode, lpReadKey } from '../../lib/user';
+import { GiftItem, UserAccount } from '../../types';
+import { CONFETTI_OPTIONS, DEFAULT_WATCH_REWARD_POINTS } from '../../constants/rewards';
+import { calcLevel, createHistoryEntry, generateGiftCode } from '../../lib/user';
 import { ShowNotification } from './useNotification';
 
 export interface RewardResult {
@@ -20,9 +19,8 @@ export interface ExchangeResult {
 
 interface Deps {
   user: UserAccount;
+  isLoggedIn: boolean;
   setUser: React.Dispatch<React.SetStateAction<UserAccount>>;
-  ads: AdItem[];
-  setAds: React.Dispatch<React.SetStateAction<AdItem[]>>;
   giftItems: GiftItem[];
   setIsAuthModalOpen: (open: boolean) => void;
   showNotification: ShowNotification;
@@ -36,36 +34,21 @@ export const triggerConfetti = () => {
   }
 };
 
-// 視聴・LP閲覧リワードの付与とギフト交換
-export const useRewards = ({ user, setUser, ads, setAds, giftItems, setIsAuthModalOpen, showNotification }: Deps) => {
-  const notEarned = (): RewardResult => ({ earned: false, points: 0, isGuest: !user.isLoggedIn });
+// 視聴リワードの付与とギフト交換（デモ: 端末内で管理）
+export const useRewards = ({ user, isLoggedIn, setUser, giftItems, setIsAuthModalOpen, showNotification }: Deps) => {
+  const claimWatchReward = (videoId: string, title: string): RewardResult => {
+    if (user.watchedAdIds.includes(videoId)) return { earned: false, points: 0, isGuest: !isLoggedIn };
 
-  // ビジターはポイントをプールし、ウォレット開設時にまとめて受け取る
-  const poolGuestPoints = (watchedKey: string, points: number, message: string): RewardResult => {
-    setUser((prev) => ({
-      ...prev,
-      watchedAdIds: [...prev.watchedAdIds, watchedKey],
-      unclaimedGuestPoints: prev.unclaimedGuestPoints + points,
-    }));
-    showNotification(message, points, 'info');
-    return { earned: true, points, isGuest: true };
-  };
-
-  const claimAdWatchReward = (adId: string): RewardResult => {
-    const ad = ads.find((a) => a.id === adId);
-    if (!ad) return notEarned();
-
-    setAds((prev) => updateAdById(prev, adId, recordView));
-
-    if (user.watchedAdIds.includes(adId)) return notEarned();
-
-    const earnedPoints = ad.rewardPoints;
-    if (!user.isLoggedIn) {
-      return poolGuestPoints(
-        adId,
-        earnedPoints,
-        `視聴完了：${earnedPoints}pt がプールされました（ウォレット開設で受取可能）`
-      );
+    const earnedPoints = DEFAULT_WATCH_REWARD_POINTS;
+    if (!isLoggedIn) {
+      // ビジターはポイントをプールし、ログイン時にまとめて受け取る
+      setUser((prev) => ({
+        ...prev,
+        watchedAdIds: [...prev.watchedAdIds, videoId],
+        unclaimedGuestPoints: prev.unclaimedGuestPoints + earnedPoints,
+      }));
+      showNotification(`視聴完了：${earnedPoints}pt がプールされました（ログインで受取可能）`, earnedPoints, 'info');
+      return { earned: true, points: earnedPoints, isGuest: true };
     }
 
     triggerConfetti();
@@ -76,57 +59,21 @@ export const useRewards = ({ user, setUser, ads, setAds, giftItems, setIsAuthMod
         points: prev.points + earnedPoints,
         totalEarnedPoints: newTotal,
         level: calcLevel(newTotal, prev.level),
-        watchedAdIds: [...prev.watchedAdIds, adId],
+        watchedAdIds: [...prev.watchedAdIds, videoId],
         pointHistory: [
-          createHistoryEntry('ph-', `視聴リワード: ${ad.brandName}`, earnedPoints, 'watch'),
+          createHistoryEntry('ph-', `視聴リワード: ${title || '動画'}`, earnedPoints, 'watch'),
           ...prev.pointHistory,
         ],
       };
     });
-
     showNotification(`リワード受取完了：+${earnedPoints}pt を獲得しました`, earnedPoints, 'success');
     return { earned: true, points: earnedPoints, isGuest: false };
   };
 
-  const claimLpReadReward = (adId: string): RewardResult => {
-    const ad = ads.find((a) => a.id === adId);
-    if (!ad) return notEarned();
-
-    setAds((prev) => updateAdById(prev, adId, recordClick));
-
-    const lpKey = lpReadKey(adId);
-    if (user.watchedAdIds.includes(lpKey)) return notEarned();
-
-    const rewardPoints = ad.landingPage.readRewardPoints || DEFAULT_LP_READ_REWARD_POINTS;
-    if (!user.isLoggedIn) {
-      return poolGuestPoints(
-        lpKey,
-        rewardPoints,
-        `詳細閲覧：${rewardPoints}pt がプールされました（ウォレット開設で受取可能）`
-      );
-    }
-
-    // レベルの再計算は視聴リワード時のみ行う（既存挙動を維持）
-    triggerConfetti();
-    setUser((prev) => ({
-      ...prev,
-      points: prev.points + rewardPoints,
-      totalEarnedPoints: prev.totalEarnedPoints + rewardPoints,
-      watchedAdIds: [...prev.watchedAdIds, lpKey],
-      pointHistory: [
-        createHistoryEntry('ph-lp-', `サービス詳細閲覧リワード: ${ad.brandName}`, rewardPoints, 'lp_read'),
-        ...prev.pointHistory,
-      ],
-    }));
-
-    showNotification(`詳細閲覧リワード：+${rewardPoints}pt を獲得しました`, rewardPoints, 'success');
-    return { earned: true, points: rewardPoints, isGuest: false };
-  };
-
   const exchangePoints = (giftId: string): ExchangeResult => {
-    if (!user.isLoggedIn) {
+    if (!isLoggedIn) {
       setIsAuthModalOpen(true);
-      return { success: false, message: 'リワードの交換にはウォレットアカウントが必要です' };
+      return { success: false, message: 'リワードの交換にはログインが必要です' };
     }
 
     const gift = giftItems.find((g) => g.id === giftId);
@@ -140,7 +87,6 @@ export const useRewards = ({ user, setUser, ads, setAds, giftItems, setIsAuthMod
     }
 
     const generatedCode = generateGiftCode();
-
     setUser((prev) => ({
       ...prev,
       points: prev.points - gift.pointsCost,
@@ -152,9 +98,8 @@ export const useRewards = ({ user, setUser, ads, setAds, giftItems, setIsAuthMod
 
     triggerConfetti();
     showNotification(`${gift.name} との交換手続きが完了しました`, undefined, 'success');
-
     return { success: true, message: `${gift.name} の交換コードを発行しました`, code: generatedCode };
   };
 
-  return { claimAdWatchReward, claimLpReadReward, exchangePoints };
+  return { claimWatchReward, exchangePoints };
 };

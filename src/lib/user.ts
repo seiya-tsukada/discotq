@@ -24,6 +24,3 @@ export const toggleId = (ids: string[], id: string): string[] =>
 const randomBlock = () => Math.random().toString(36).substring(2, 6).toUpperCase();
 
 export const generateGiftCode = () => `${GIFT_CODE_PREFIX}-${randomBlock()}-${randomBlock()}`;
-
-// LP 閲覧済みを watchedAdIds 上で区別するためのキー
-export const lpReadKey = (adId: string) => `lp-${adId}`;

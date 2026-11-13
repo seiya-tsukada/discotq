@@ -3,19 +3,18 @@ import { X, Send, MessageSquare } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export const CommentsModal: React.FC = () => {
-  const { isCommentsModalOpen, setIsCommentsModalOpen, ads, currentAdIndex, comments, addComment, user } = useApp();
+  const { isCommentsModalOpen, setIsCommentsModalOpen, currentVideo, comments, addComment, user } = useApp();
 
   const [commentInput, setCommentInput] = useState('');
 
-  if (!isCommentsModalOpen) return null;
+  if (!isCommentsModalOpen || !currentVideo) return null;
 
-  const currentAd = ads[currentAdIndex] || ads[0];
-  const adComments = comments[currentAd.id] || [];
+  const videoComments = comments[currentVideo.id] || [];
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentInput.trim()) return;
-    addComment(currentAd.id, commentInput);
+    addComment(currentVideo.id, commentInput);
     setCommentInput('');
   };
 
@@ -27,7 +26,7 @@ export const CommentsModal: React.FC = () => {
           <div className="flex items-center gap-2">
             <MessageSquare className="w-4 h-4 text-blue-400" />
             <h3 className="text-xs sm:text-sm font-semibold text-white">
-              ユーザーレビュー・コメント ({adComments.length}件)
+              ユーザーレビュー・コメント ({videoComments.length}件)
             </h3>
           </div>
           <button
@@ -40,15 +39,13 @@ export const CommentsModal: React.FC = () => {
 
         {/* Comments List */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          {adComments.length === 0 ? (
+          {videoComments.length === 0 ? (
             <div className="text-center py-12 text-slate-500 text-xs">まだコメントはありません。</div>
           ) : (
-            adComments.map((cmt) => (
+            videoComments.map((cmt) => (
               <div
                 key={cmt.id}
-                className={`p-3 rounded-lg flex items-start gap-2.5 ${
-                  cmt.isSponsorReply ? 'bg-slate-950 border border-blue-500/30' : 'bg-slate-950 border border-slate-800'
-                }`}
+                className="p-3 rounded-lg flex items-start gap-2.5 bg-slate-950 border border-slate-800"
               >
                 <img
                   src={cmt.userAvatar}
@@ -58,11 +55,6 @@ export const CommentsModal: React.FC = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 mb-0.5">
                     <span className="font-semibold text-xs text-slate-200 truncate">{cmt.userName}</span>
-                    {cmt.isSponsorReply && (
-                      <span className="text-[10px] font-semibold text-blue-400 bg-blue-500/10 px-1.5 py-0.2 rounded border border-blue-500/20">
-                        公式回答
-                      </span>
-                    )}
                     <span className="text-[10px] text-slate-500 ml-auto">{cmt.timeAgo}</span>
                   </div>
                   <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">{cmt.comment}</p>

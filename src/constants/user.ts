@@ -8,9 +8,6 @@ export const MEMBER_AVATAR_URL =
 export const GUEST_USER_NAME = 'ビジターユーザー';
 export const GUEST_COMMENT_NAME = 'ビジター';
 
-export const DEFAULT_LOGIN_EMAIL = 'user@business.example.com';
-export const DEFAULT_LOGIN_NAME = 'ビジネスメンバー';
-
 export const createGuestUser = (): UserAccount => ({
   isLoggedIn: false,
   id: 'guest-' + Math.random().toString(36).substring(2, 9),

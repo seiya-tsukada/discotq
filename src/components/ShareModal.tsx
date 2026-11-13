@@ -4,13 +4,13 @@ import { useApp } from '../context/AppContext';
 import { SHARE_COPY_FEEDBACK_DURATION_MS } from '../constants/timing';
 
 export const ShareModal: React.FC = () => {
-  const { isShareModalOpen, setIsShareModalOpen, ads, currentAdIndex, showNotification } = useApp();
+  const { isShareModalOpen, setIsShareModalOpen, currentVideo, showNotification } = useApp();
   const [copied, setCopied] = useState(false);
 
-  if (!isShareModalOpen) return null;
+  if (!isShareModalOpen || !currentVideo) return null;
 
-  const currentAd = ads[currentAdIndex] || ads[0];
-  const shareUrl = `${window.location.origin}/#ad-${currentAd.id}`;
+  // 個別動画へのディープリンクは未対応のため、フィードのトップを共有する
+  const shareUrl = `${window.location.origin}/`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(shareUrl);
@@ -20,7 +20,7 @@ export const ShareModal: React.FC = () => {
   };
 
   const handleSnsShare = (platform: string) => {
-    showNotification(`${platform}で「${currentAd.title}」を共有しました（デモ）`, undefined, 'info');
+    showNotification(`${platform}で「${currentVideo.title}」を共有しました（デモ）`, undefined, 'info');
     setIsShareModalOpen(false);
   };
 
@@ -44,10 +44,20 @@ export const ShareModal: React.FC = () => {
         {/* Content */}
         <div className="p-4 space-y-3.5">
           <div className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-950 border border-slate-800">
-            <img src={currentAd.posterUrl} alt={currentAd.title} className="w-10 h-14 rounded-md object-cover" />
+            {currentVideo.thumb_url ? (
+              <img
+                src={currentVideo.thumb_url}
+                alt={currentVideo.title}
+                className="w-10 h-14 rounded-md object-cover"
+              />
+            ) : (
+              <div className="w-10 h-14 rounded-md bg-slate-800" />
+            )}
             <div className="flex-1 min-w-0">
-              <span className="text-[10px] text-slate-400 font-semibold block">{currentAd.brandName}</span>
-              <p className="text-xs font-semibold text-white truncate">{currentAd.title}</p>
+              <span className="text-[10px] text-slate-400 font-semibold block">
+                {currentVideo.source === 'platform' ? 'DiscoTQ 編集部' : 'ユーザー投稿'}
+              </span>
+              <p className="text-xs font-semibold text-white truncate">{currentVideo.title || '無題の動画'}</p>
               <span className="text-[10px] text-blue-400 font-medium">公式プロモーション</span>
             </div>
           </div>

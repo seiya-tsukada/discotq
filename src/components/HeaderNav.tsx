@@ -1,9 +1,17 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { PlayCircle, Coins, User, LogOut, ShoppingBag, Sparkles } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Link } from '../router';
+import { PlayCircle, Coins, User, LogOut, ShoppingBag, Sparkles, Upload, Shield } from 'lucide-react';
 
 export const HeaderNav: React.FC = () => {
-  const { user, setIsPointStoreOpen, setIsAuthModalOpen, logout } = useApp();
+  const { user, setIsPointStoreOpen, setIsAuthModalOpen, showNotification } = useApp();
+  const { user: authUser, logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    showNotification('ログアウトしました', undefined, 'info');
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800 px-4 py-2.5">
@@ -19,17 +27,35 @@ export const HeaderNav: React.FC = () => {
                 <span className="font-bold text-lg tracking-tight text-white">
                   Disco<span className="text-blue-400">TQ</span>
                 </span>
-                <span className="text-[10px] font-semibold tracking-wide px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-750">
-                  Ad Media
+                <span className="hidden sm:inline-block text-[10px] font-semibold tracking-wide px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-750">
+                  Shorts
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 hidden sm:block">新しい発見があるショート広告プラットフォーム</p>
+              <p className="text-[11px] text-slate-400 hidden sm:block">新しい発見があるショート動画プラットフォーム</p>
             </div>
           </div>
         </div>
 
         {/* Right Action Bar (Viewer Only) */}
         <div className="flex items-center gap-2 sm:gap-3">
+          <Link
+            to="/user"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white transition-colors"
+            title="動画を投稿する"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">投稿</span>
+          </Link>
+          {authUser?.is_admin && (
+            <Link
+              to="/admin"
+              className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs text-slate-300"
+              title="運営管理画面"
+            >
+              <Shield className="w-3.5 h-3.5 text-emerald-400" />
+              <span>管理</span>
+            </Link>
+          )}
           {/* Points Balance Badge */}
           {user.isLoggedIn ? (
             <button
@@ -62,7 +88,7 @@ export const HeaderNav: React.FC = () => {
                 {user.unclaimedGuestPoints > 0 ? (
                   <span>保留中: {user.unclaimedGuestPoints}pt</span>
                 ) : (
-                  <span>ウォレット</span>
+                  <span>リワード</span>
                 )}
               </span>
               {user.unclaimedGuestPoints > 0 && <span className="flex h-2 w-2 rounded-full bg-blue-500"></span>}
@@ -92,7 +118,7 @@ export const HeaderNav: React.FC = () => {
                 </span>
               </button>
               <button
-                onClick={logout}
+                onClick={handleLogout}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer"
                 title="ログアウト"
               >
@@ -105,7 +131,7 @@ export const HeaderNav: React.FC = () => {
               className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-all cursor-pointer shadow-sm"
             >
               <User className="w-3.5 h-3.5" />
-              <span>会員登録 / ログイン</span>
+              <span>ログイン</span>
             </button>
           )}
         </div>
