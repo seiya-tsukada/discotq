@@ -1,42 +1,99 @@
-"""GET /api/health（liveness、DB なし）と GET /api/health/ready（DB の readiness）。"""
+"""GET /api/health（liveness）と GET /api/health/ready（DB・R2 の readiness）。"""
 
 from __future__ import annotations
 
 import os
+from collections.abc import Iterator
 from typing import Any
 
+import httpx
 import psycopg
 import pytest
+from fastapi.testclient import TestClient
 
 from backend.app.config import get_settings
-from backend.tests.conftest import requires_db
+from backend.app.deps import get_storage
+from backend.app.main import app
+from backend.app.storage.r2 import R2Storage
+from backend.tests.conftest import PRIVATE, requires_db
+
+ALL_OK = {"private": "ok", "public": "ok", "public_url": "ok"}
 
 
-@requires_db
-def test_ready_ok_when_database_is_reachable(make_client: Any) -> None:
-    res = make_client().get("/api/health/ready")
-    assert res.status_code == 200
-    assert res.json() == {"status": "ok", "db": "ok"}
+@pytest.fixture
+def public_url_ok(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("httpx.head", lambda url, **_: httpx.Response(404, request=httpx.Request("HEAD", url))
+    )
 
 
-def test_ready_503_when_database_is_unreachable(monkeypatch: pytest.MonkeyPatch) -> None:
-    from fastapi.testclient import TestClient
+@pytest.fixture
+def client(storage: R2Storage, public_url_ok: None) -> Iterator[TestClient]:
+    app.dependency_overrides[get_storage] = lambda: storage
+    with TestClient(app) as c:
+        yield c
+    app.dependency_overrides.clear()
 
+
+def _db_unreachable(monkeypatch: pytest.MonkeyPatch) -> None:
     from backend.app import db
-    from backend.app.main import app
 
     def unreachable(*_args: object, **_kwargs: object) -> None:
         raise psycopg.OperationalError("connection refused")
 
     monkeypatch.setattr(db, "ping", unreachable)
-    with TestClient(app) as client:
-        res = client.get("/api/health/ready")
-        assert res.status_code == 503
-        assert res.json() == {"status": "error", "db": "unavailable"}
-        # liveness は DB に触れない
-        live = client.get("/api/health")
-        assert live.status_code == 200
-        assert live.json() == {"status": "ok", "email": "console"}
+
+
+@requires_db
+def test_ready_ok_when_database_and_storage_are_reachable(client: TestClient) -> None:
+    res = client.get("/api/health/ready")
+    assert res.status_code == 200
+    assert res.json() == {"status": "ok", "db": "ok", "storage": ALL_OK}
+
+
+def test_ready_503_when_database_is_unreachable(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    _db_unreachable(monkeypatch)
+    res = client.get("/api/health/ready")
+    assert res.status_code == 503
+    assert res.json() == {"status": "error", "db": "unavailable", "storage": ALL_OK}
+    # liveness は DB・ストレージに触れない
+    live = client.get("/api/health")
+    assert live.status_code == 200
+    assert live.json() == {"status": "ok", "email": "console"}
+
+
+def test_ready_503_when_bucket_is_missing(
+    client: TestClient, storage: R2Storage, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    monkeypatch.setattr("backend.app.db.ping", lambda *_a, **_k: None)
+    storage.client.delete_bucket(Bucket=PRIVATE)
+    res = client.get("/api/health/ready")
+    assert res.status_code == 503
+    assert res.json() == {
+        "status": "error",
+        "db": "ok",
+        "storage": {"private": "NoSuchBucket", "public": "ok", "public_url": "ok"},
+    }
+    assert "storage_check_failed target=private" in caplog.text
+    assert "code=NoSuchBucket" in caplog.text
+
+
+def test_ready_503_when_storage_check_raises(
+    storage: R2Storage, public_url_ok: None, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("backend.app.db.ping", lambda *_a, **_k: None)
+
+    class Broken:
+        def check(self, **_: Any) -> dict[str, str]:
+            raise RuntimeError("bug")
+
+    app.dependency_overrides[get_storage] = lambda: Broken()
+    try:
+        with TestClient(app) as c:
+            res = c.get("/api/health/ready")
+    finally:
+        app.dependency_overrides.clear()
+    assert res.status_code == 503
+    assert res.json()["storage"] == {"error": "check_failed"}
 
 
 @requires_db

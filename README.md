@@ -164,10 +164,25 @@ bun run test   # Vitest
 
 ## 死活監視
 
-| エンドポイント          | 内容                                                                                                 |
-| ----------------------- | ---------------------------------------------------------------------------------------------------- |
-| `GET /api/health`       | liveness。DB に接続しない。`{"status": "ok", "email": "<EMAIL_BACKEND>"}`                            |
-| `GET /api/health/ready` | readiness。READ ONLY・タイムアウト 3 秒で `select 1` を実行し、通れば `200`、DB に届かなければ `503` |
+| エンドポイント          | 内容                                                                                                       |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `GET /api/health`       | liveness。DB・R2 に接続しない。`{"status": "ok", "email": "<EMAIL_BACKEND>"}`                              |
+| `GET /api/health/ready` | readiness。下記をすべて確認し、通れば `200`、どれかが失敗すれば `503`（各タイムアウト 3 秒、書き込みなし） |
+
+`/api/health/ready` の応答例と確認内容:
+
+```json
+{ "status": "ok", "db": "ok", "storage": { "private": "ok", "public": "ok", "public_url": "ok" } }
+```
+
+| 項目                 | 確認内容                                                                           | 失敗時の値の例                                                                                                                                                                                                |
+| -------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `db`                 | READ ONLY で `select 1`                                                            | `unavailable`                                                                                                                                                                                                 |
+| `storage.private`    | private バケットの一覧を 1 件だけ読む（`ListObjectsV2`, `MaxKeys=1`）              | `NoSuchBucket`（バケット名の誤り）/ `AccessDenied`（トークンの権限・対象バケット）/ `InvalidAccessKeyId` / `SignatureDoesNotMatch`（キーの誤り）/ `endpoint_unreachable`（`R2_ACCOUNT_ID` の誤り）/ `timeout` |
+| `storage.public`     | public バケットに同上                                                              | 同上                                                                                                                                                                                                          |
+| `storage.public_url` | `R2_PUBLIC_BASE_URL` に HTTP HEAD（5xx 以外なら到達とみなす。ルートは 404 で正常） | `unreachable`（DNS・カスタムドメイン未設定）/ `timeout` / `http_5xx`                                                                                                                                          |
+
+ブラウザから R2 への直接アップロードに必要な CORS 設定はこの確認では検出できません。CORS は実際に `/user` から投稿して確認してください。
 
 必須の環境変数が欠けていると API は起動時に停止するため、`/api/health` も `500 FUNCTION_INVOCATION_FAILED` になります。原因は次のログで確認できます。
 
@@ -175,18 +190,19 @@ bun run test   # Vitest
 
 Vercel のダッシュボードで Project > Logs（または Deployments > 対象 > Logs）を開くと確認できます。画面のエラーに出る「エラーID」（`x-vercel-id`）でログを検索できます。
 
-| ログ（先頭の文字列）                                              | 意味・対処                                                                                                     |
-| ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `config_error ... R2_ACCOUNT_ID: 未設定`                          | 起動時の設定エラー。不足・不正な環境変数名が並ぶ（値は出力しない）                                             |
-| `startup db=... r2_endpoint=...`                                  | 起動成功。接続先（パスワード抜き）・メール方式など                                                             |
-| `config_warning ...`                                              | DATABASE_URL の典型的な設定ミス（直接接続ホスト・6543 以外のポート・pooler のユーザー名に project-ref が無い） |
-| `GET /api/videos/feed -> 503 (12ms) request_id=...`               | 1 リクエスト 1 行のアクセスログ（4xx は WARNING、5xx は ERROR）                                                |
-| `db_connect_failed target=... error=...` / `db_unavailable`       | DB に接続できない（接続先・libpq のエラー内容）。応答は `503 db_unavailable`                                   |
-| `db_error sqlstate=42P01 ... hint=...init.sql を適用してください` | テーブルが無い（init.sql 未適用）などの DB エラー。応答は `500 db_error`                                       |
-| `storage_error operation=CopyObject code=AccessDenied`            | R2 のエラー（権限・バケット名・エンドポイント）。応答は `502 storage_error`                                    |
-| `email_error` / `Resend API error`                                | メール送信の失敗。応答は `502 email_error`                                                                     |
-| `unhandled_error ...`（スタックトレース付き）                     | 想定外の例外。応答は `500 internal_error`                                                                      |
-| `api_error code=rate_limited ...`                                 | 想定内のエラー（入力不正・権限・レート制限など）の理由コード                                                   |
+| ログ（先頭の文字列）                                               | 意味・対処                                                                                                     |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| `config_error ... R2_ACCOUNT_ID: 未設定`                           | 起動時の設定エラー。不足・不正な環境変数名が並ぶ（値は出力しない）                                             |
+| `startup db=... r2_endpoint=...`                                   | 起動成功。接続先（パスワード抜き）・メール方式など                                                             |
+| `config_warning ...`                                               | DATABASE_URL の典型的な設定ミス（直接接続ホスト・6543 以外のポート・pooler のユーザー名に project-ref が無い） |
+| `GET /api/videos/feed -> 503 (12ms) request_id=...`                | 1 リクエスト 1 行のアクセスログ（4xx は WARNING、5xx は ERROR）                                                |
+| `db_connect_failed target=... error=...` / `db_unavailable`        | DB に接続できない（接続先・libpq のエラー内容）。応答は `503 db_unavailable`                                   |
+| `db_error sqlstate=42P01 ... hint=...init.sql を適用してください`  | テーブルが無い（init.sql 未適用）などの DB エラー。応答は `500 db_error`                                       |
+| `storage_error operation=CopyObject code=AccessDenied`             | R2 のエラー（権限・バケット名・エンドポイント）。応答は `502 storage_error`                                    |
+| `storage_check_failed target=private bucket=... code=NoSuchBucket` | `/api/health/ready` での R2 接続確認の失敗（対象・バケット・エンドポイント・理由）                             |
+| `email_error` / `Resend API error`                                 | メール送信の失敗。応答は `502 email_error`                                                                     |
+| `unhandled_error ...`（スタックトレース付き）                      | 想定外の例外。応答は `500 internal_error`                                                                      |
+| `api_error code=rate_limited ...`                                  | 想定内のエラー（入力不正・権限・レート制限など）の理由コード                                                   |
 
 ログレベルは `LOG_LEVEL`（既定 `INFO`）で変更できます。パスワード・トークン・DATABASE_URL の値・メールアドレス・生の IP アドレスはログに出力しません。
 
