@@ -204,3 +204,9 @@ def test_feed_cursor_paging(
     assert [i["id"] for i in p2["items"]] == [ids[0]]
     assert p2["next_cursor"] is None
     assert viewer.get("/api/videos/feed", params={"cursor": "!!bad"}).status_code == 400
+
+
+def test_feed_cache_headers_do_not_let_browsers_serve_stale(make_client: Any) -> None:
+    res = make_client().get("/api/videos/feed")
+    assert res.headers["cache-control"] == "public, max-age=0, must-revalidate"
+    assert "stale-while-revalidate" in res.headers["cdn-cache-control"]

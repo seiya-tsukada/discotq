@@ -8,12 +8,29 @@ from fastapi import APIRouter, Depends
 from backend.app.auth import ConnDep, PrincipalDep, SettingsDep
 from backend.app.deps import get_storage
 from backend.app.routers.me import to_my_video
-from backend.app.schemas.videos import MyVideo, UploadIntentRequest, UploadIntentResponse
+from backend.app.schemas.videos import (
+    MIME_EXTENSIONS,
+    MyVideo,
+    UploadConfig,
+    UploadIntentRequest,
+    UploadIntentResponse,
+)
 from backend.app.services import videos as video_service
 from backend.app.storage.base import VideoStorage
 
 router = APIRouter(prefix="/uploads", tags=["uploads"])
 StorageDep = Annotated[VideoStorage, Depends(get_storage)]
+
+
+@router.get("/config", response_model=UploadConfig)
+def upload_config(settings: SettingsDep) -> UploadConfig:
+    """フロントで事前チェックするためのアップロード上限。"""
+    return UploadConfig(
+        allowed_mime_types=list(MIME_EXTENSIONS),
+        max_upload_bytes=settings.max_upload_bytes,
+        max_video_duration_sec=settings.max_video_duration_sec,
+        max_thumbnail_bytes=settings.max_thumbnail_bytes,
+    )
 
 
 @router.post("/intent", response_model=UploadIntentResponse, status_code=201)

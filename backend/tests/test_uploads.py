@@ -210,3 +210,13 @@ def test_verified_user_upload_without_anonymous_id(
     items = c.get("/api/me/videos").json()["items"]
     assert items[0]["id"] == intent["video_id"] and items[0]["is_claimed"] is True
     assert user["email_verified"]
+
+
+def test_upload_config(make_client: Any) -> None:
+    body = make_client().get("/api/uploads/config").json()
+    assert body == {
+        "allowed_mime_types": ["video/mp4", "video/webm", "video/quicktime"],
+        "max_upload_bytes": 50 * 1024 * 1024,
+        "max_video_duration_sec": 180,
+        "max_thumbnail_bytes": 2 * 1024 * 1024,
+    }

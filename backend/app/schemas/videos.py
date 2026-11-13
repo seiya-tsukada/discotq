@@ -27,6 +27,13 @@ MIME_EXTENSIONS: dict[str, str] = {
 THUMBNAIL_MIME = "image/jpeg"
 
 
+class UploadConfig(BaseModel):
+    allowed_mime_types: list[str]
+    max_upload_bytes: int
+    max_video_duration_sec: int
+    max_thumbnail_bytes: int
+
+
 class ThumbnailSpec(BaseModel):
     size_bytes: int = Field(gt=0)
 

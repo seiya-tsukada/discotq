@@ -59,5 +59,8 @@ def feed(
         for r in rows
     ]
     next_cursor = encode_cursor(rows[-1]["approved_at"], rows[-1]["id"]) if has_more and rows else None
-    response.headers["Cache-Control"] = "public, max-age=0, s-maxage=30, stale-while-revalidate=60"
+    # ブラウザには毎回再検証させ（stale-while-revalidate はブラウザにも効き、承認直後に古い一覧が出るため）、
+    # 短時間のキャッシュは Vercel の CDN（CDN-Cache-Control を解釈する）にだけ持たせる
+    response.headers["Cache-Control"] = "public, max-age=0, must-revalidate"
+    response.headers["CDN-Cache-Control"] = "public, max-age=30, stale-while-revalidate=60"
     return FeedResponse(items=items, next_cursor=next_cursor)
