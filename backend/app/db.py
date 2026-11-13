@@ -23,6 +23,22 @@ def connect(database_url: str | None = None) -> Conn:
     return psycopg.connect(url, prepare_threshold=None, row_factory=dict_row, connect_timeout=10)
 
 
+def ping(timeout_s: int = 3) -> None:
+    """DB に到達できるかを素早く確認する。到達できなければ例外を送出する。
+
+    短い接続・ステートメントのタイムアウト付きで、READ ONLY トランザクション内で ``select 1``
+    を実行する。待ち続けることもデータを変更することもない。
+    """
+    timeout_s = int(timeout_s)
+    url = get_settings().database_url.get_secret_value()
+    with psycopg.connect(
+        url, prepare_threshold=None, row_factory=dict_row, connect_timeout=timeout_s
+    ) as conn:
+        conn.read_only = True
+        conn.execute(f"set local statement_timeout = '{timeout_s}s'")
+        conn.execute("select 1").fetchone()
+
+
 def get_conn() -> Iterator[Conn]:
     """FastAPI 依存関数。例外が伝播した場合は rollback される。"""
     with connect() as conn:
