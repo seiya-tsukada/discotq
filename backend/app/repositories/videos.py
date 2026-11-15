@@ -283,3 +283,9 @@ def get_admin_video(conn: Conn, video_id: UUID) -> VideoRow | None:
         """,
         (video_id,),
     ).fetchone()
+
+
+def delete_video(conn: Conn, video_id: UUID) -> bool:
+    """行を物理削除する（video_reviews は on delete cascade）。運用スクリプト用。"""
+    row = conn.execute("delete from discotq.videos where id = %s returning id", (video_id,)).fetchone()
+    return row is not None

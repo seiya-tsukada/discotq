@@ -101,13 +101,42 @@ class R2Storage:
         )
 
     def head_private(self, key: str) -> ObjectInfo | None:
+        return self._head(self._private_bucket, key)
+
+    def head_public(self, key: str) -> ObjectInfo | None:
+        return self._head(self._public_bucket, key)
+
+    def _head(self, bucket: str, key: str) -> ObjectInfo | None:
         try:
-            res: Any = self._client.head_object(Bucket=self._private_bucket, Key=key)
+            res: Any = self._client.head_object(Bucket=bucket, Key=key)
         except ClientError as e:
             if e.response.get("Error", {}).get("Code") in ("404", "NoSuchKey", "NotFound"):
                 return None
             raise
-        return ObjectInfo(size_bytes=int(res["ContentLength"]), content_type=res.get("ContentType"))
+        return ObjectInfo(
+            size_bytes=int(res["ContentLength"]),
+            content_type=res.get("ContentType"),
+            etag=str(res.get("ETag") or "").strip('"') or None,
+        )
+
+    def put_private(self, key: str, body: bytes, *, content_type: str) -> ObjectInfo:
+        # upload_file は大きいファイルをマルチパートにし ETag が MD5 にならないため、単一 PUT にする
+        res: Any = self._client.put_object(
+            Bucket=self._private_bucket, Key=key, Body=body, ContentType=content_type
+        )
+        return ObjectInfo(
+            size_bytes=len(body),
+            content_type=content_type,
+            etag=str(res.get("ETag") or "").strip('"') or None,
+        )
+
+    def list_keys(self, prefix: str, *, public: bool) -> list[str]:
+        bucket = self._public_bucket if public else self._private_bucket
+        keys: list[str] = []
+        paginator = self._client.get_paginator("list_objects_v2")
+        for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
+            keys.extend(obj["Key"] for obj in page.get("Contents", []))
+        return keys
 
     def delete_private(self, key: str) -> None:
         self._client.delete_object(Bucket=self._private_bucket, Key=key)

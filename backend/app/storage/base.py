@@ -26,6 +26,8 @@ class PresignedUpload:
 class ObjectInfo:
     size_bytes: int
     content_type: str | None
+    # 単一 PUT で保存したオブジェクトでは内容の MD5（16 進）。差し替え要否の判定に使う
+    etag: str | None = None
 
 
 @runtime_checkable
@@ -55,6 +57,18 @@ class VideoStorage(Protocol):
         ...
 
     def delete_private(self, key: str) -> None: ...
+
+    def put_private(self, key: str, body: bytes, *, content_type: str) -> ObjectInfo:
+        """サーバー側から非公開領域へ直接保存する（seed など運用スクリプト用）。"""
+        ...
+
+    def head_public(self, key: str) -> ObjectInfo | None:
+        """公開領域のオブジェクト情報。存在しなければ None。"""
+        ...
+
+    def list_keys(self, prefix: str, *, public: bool) -> list[str]:
+        """指定したプレフィックス配下のキー一覧（運用スクリプトの整合性確認用）。"""
+        ...
 
     def publish(self, key: str) -> str:
         """非公開領域のオブジェクトを公開領域へコピーし、公開 URL を返す。"""
