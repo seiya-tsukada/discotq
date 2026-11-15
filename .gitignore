@@ -16,3 +16,7 @@ __pycache__/
 
 # Vercel
 .vercel
+
+# seed 動画の実ファイル（リポジトリには置かない）
+seed/files/*
+!seed/files/.gitkeep

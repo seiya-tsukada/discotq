@@ -28,6 +28,7 @@ backend/app/
 └── schemas/                 # Pydantic モデル
 backend/tests/               # pytest（実 Postgres + moto）
 scripts/                     # create_admin.py / setup_r2_cors.py
+seed/                        # seed 動画の管理（マニフェスト・CLI。seed/README.md）
 supabase/migration/          # init.sql（スキーマ）, optional_app_role.sql（API 専用ロール）
 supabase/maintenance/        # 運用 SQL（01〜06）
 src/                         # フロントエンド（Vite + React + TypeScript）
@@ -88,7 +89,7 @@ bun dev   # http://localhost:3000
 ```bash
 docker run -d --rm --name discotq-pg-test -e POSTGRES_PASSWORD=postgres -p 54329:5432 postgres:17-alpine
 TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:54329/postgres .venv/bin/pytest backend
-.venv/bin/mypy --config-file backend/mypy.ini backend api scripts
+.venv/bin/mypy --config-file backend/mypy.ini backend api scripts seed
 bun run lint   # tsc + ESLint
 bun run test   # Vitest
 ```
@@ -205,6 +206,15 @@ Vercel のダッシュボードで Project > Logs（または Deployments > 対�
 | `api_error code=rate_limited ...`                                  | 想定内のエラー（入力不正・権限・レート制限など）の理由コード                                                   |
 
 ログレベルは `LOG_LEVEL`（既定 `INFO`）で変更できます。パスワード・トークン・DATABASE_URL の値・メールアドレス・生の IP アドレスはログに出力しません。
+
+## seed（初期表示用の動画）
+
+運営が用意した動画をまとめて登録・公開するには `seed/` を使います。手順は [seed/README.md](seed/README.md) を参照してください。
+
+```bash
+.venv/bin/python -m seed apply --dry-run
+.venv/bin/python -m seed apply
+```
 
 ## 動画ファイルの推奨形式（faststart）
 
