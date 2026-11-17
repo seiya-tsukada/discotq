@@ -115,12 +115,10 @@ const AdminDashboard: React.FC = () => {
         />
       )}
       {tab === 'upload' && (
-        <section className="max-w-2xl p-4 rounded-xl bg-slate-900/50 border border-slate-800">
-          <p className="text-xs text-slate-400 mb-3">
-            運営が選定した動画（source=platform）を登録します。「審査を省略」を選ぶと、アップロード完了と同時に公開されます。
-          </p>
+        <section className="p-4 rounded-xl bg-slate-900/50 border border-slate-800">
           <UploadPanel
             mode="admin"
+            intro="運営が選定した動画（source=platform）を登録します。「審査を省略」を選ぶと、アップロード完了と同時に公開されます。"
             onUploaded={(v) =>
               handleChanged(v.status === 'approved' ? '運営動画を公開しました' : '運営動画を審査キューに追加しました')
             }
