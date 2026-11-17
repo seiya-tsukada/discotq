@@ -124,10 +124,19 @@ bun run test   # Vitest
 3. `DATABASE_URL` には **transaction pooler（ポート 6543）** の接続文字列を使う（Project Settings > Database > Connection string > Transaction pooler）。専用ロールの場合、ユーザー名は `discotq_app.<project-ref>`
 4. 最初の管理者を作成
 
+   `create_admin.py` は Vercel 用の `DATABASE_URL`（6543）を使いません。**ポート 5432**（Connect > Session pooler、または IPv6 が使える環境なら Direct connection）に接続し、DB のパスワードは psql と同じく実行時に入力します（画面に表示されず、シェルの履歴にも残りません）。
+
    ```bash
-   DATABASE_URL=... .venv/bin/python scripts/create_admin.py create admin@example.com --name 運営
-   DATABASE_URL=... .venv/bin/python scripts/create_admin.py list
+   .venv/bin/python scripts/create_admin.py create admin@example.com --name 運営 \
+     --host aws-0-<region>.pooler.supabase.com --user postgres.<project-ref>
+   .venv/bin/python scripts/create_admin.py list \
+     --host aws-0-<region>.pooler.supabase.com --user postgres.<project-ref>
    ```
+
+   - 最初に DB のパスワード、続けて管理者アカウントのパスワード（2 回）を聞かれます
+   - 接続先は `PGHOST` / `PGPORT` / `PGUSER` / `PGDATABASE` や、パスワードを含まない `--db-url` でも指定できます。ポートの既定は 5432、SSL は必須（`sslmode=require`）です
+   - DB のパスワードの入力を省くには、psql と同じく `~/.pgpass` か `PGPASSWORD` を使えます
+   - パスワード入りの接続文字列や、ポート 6543 を指定するとエラーで終了します
 
    既存ユーザーを管理者にする場合は `grant`、外す場合は `revoke`、パスワードを再設定する場合は `reset-password` を使います。
 
