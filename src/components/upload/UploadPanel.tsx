@@ -6,13 +6,15 @@ import { useVideoUpload } from './useVideoUpload';
 
 interface UploadPanelProps {
   mode: 'user' | 'admin';
+  /** admin のみ: 右カラムの先頭に表示する説明文 */
+  intro?: React.ReactNode;
   onUploaded?: (video: MyVideo) => void;
 }
 
 const inputClass =
-  'w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500';
+  'w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 disabled:cursor-not-allowed';
 
-export const UploadPanel: React.FC<UploadPanelProps> = ({ mode, onUploaded }) => {
+export const UploadPanel: React.FC<UploadPanelProps> = ({ mode, intro, onUploaded }) => {
   const { config, phase, selected, progress, error, warning, result, selectFile, upload, cancel, reset } =
     useVideoUpload(mode);
   const [title, setTitle] = useState('');
@@ -22,6 +24,7 @@ export const UploadPanel: React.FC<UploadPanelProps> = ({ mode, onUploaded }) =>
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const busy = phase === 'preparing' || phase === 'uploading' || phase === 'completing';
+  const isAdmin = mode === 'admin';
 
   const handleFiles = (files: FileList | null) => {
     const file = files?.[0];
@@ -30,6 +33,7 @@ export const UploadPanel: React.FC<UploadPanelProps> = ({ mode, onUploaded }) =>
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selected) return;
     const done = await upload({ title, description, autoApprove });
     if (done) {
       setTitle('');
@@ -64,133 +68,157 @@ export const UploadPanel: React.FC<UploadPanelProps> = ({ mode, onUploaded }) =>
     );
   }
 
-  return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      {!selected ? (
-        <div
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDragOver(true);
-          }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setDragOver(false);
-            handleFiles(e.dataTransfer.files);
-          }}
-          onClick={() => !busy && config && fileInputRef.current?.click()}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && fileInputRef.current?.click()}
-          className={`flex flex-col items-center justify-center gap-2 p-8 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${
-            dragOver ? 'border-blue-400 bg-blue-500/10' : 'border-slate-700 bg-slate-900 hover:border-slate-500'
-          }`}
-        >
-          {phase === 'preparing' ? (
-            <>
-              <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
-              <p className="text-sm text-slate-300">動画を読み込み、サムネイルを生成しています…</p>
-            </>
-          ) : (
-            <>
-              <UploadCloud className="w-8 h-8 text-blue-400" />
-              <p className="text-sm text-slate-200 font-semibold">ここに動画をドラッグ&ドロップ</p>
-              <p className="text-xs text-slate-400">またはクリックしてファイルを選択</p>
-              {config && (
-                <p className="text-[11px] text-slate-500">
-                  MP4 / WebM / MOV ・ 最大 {formatBytes(config.max_upload_bytes)} ・ 最長{' '}
-                  {formatDuration(config.max_video_duration_sec)}（縦型 9:16 推奨）
-                </p>
-              )}
-            </>
-          )}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="video/mp4,video/webm,video/quicktime,.mp4,.m4v,.webm,.mov"
-            className="hidden"
-            onChange={(e) => handleFiles(e.target.files)}
-          />
-        </div>
-      ) : (
-        <div className="flex gap-4 flex-col sm:flex-row">
-          <div className="relative w-full sm:w-40 aspect-[9/16] rounded-lg overflow-hidden bg-black border border-slate-800 shrink-0">
-            <video
-              src={selected.previewUrl}
-              poster={selected.thumbnailUrl ?? undefined}
-              controls
-              playsInline
-              muted
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="flex-1 flex flex-col gap-2 min-w-0">
-            <div className="flex items-start gap-2">
-              <FileVideo className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm text-white truncate">{selected.file.name}</p>
-                <p className="text-[11px] text-slate-400">
-                  {formatBytes(selected.file.size)} ・ {formatDuration(selected.meta.durationSec)} ・{' '}
-                  {selected.meta.width}×{selected.meta.height}
-                </p>
-              </div>
-              {!busy && (
-                <button
-                  type="button"
-                  onClick={startOver}
-                  className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
-                  title="選び直す"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-            {selected.thumbnailUrl && (
-              <div className="flex items-center gap-2">
-                <img
-                  src={selected.thumbnailUrl}
-                  alt="自動生成サムネイル"
-                  className="w-10 h-14 object-cover rounded border border-slate-700"
-                />
-                <span className="text-[11px] text-slate-400">サムネイルを自動生成しました</span>
-              </div>
-            )}
-            <label className="flex flex-col gap-1 text-xs text-slate-400">
-              タイトル
-              <input
-                className={inputClass}
-                value={title}
-                maxLength={100}
-                onChange={(e) => setTitle(e.target.value)}
-                disabled={busy}
-                placeholder="例: 新商品を使ってみた"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-xs text-slate-400">
-              説明（任意）
-              <textarea
-                className={`${inputClass} min-h-[72px]`}
-                value={description}
-                maxLength={2000}
-                onChange={(e) => setDescription(e.target.value)}
-                disabled={busy}
-              />
-            </label>
-            {mode === 'admin' && (
-              <label className="flex items-center gap-2 text-xs text-slate-300">
-                <input
-                  type="checkbox"
-                  checked={autoApprove}
-                  onChange={(e) => setAutoApprove(e.target.checked)}
-                  disabled={busy}
-                />
-                審査を省略してすぐに公開する
-              </label>
-            )}
-          </div>
-        </div>
-      )}
+  // ---------------------------------------------------------------- 部品
 
+  // admin は縦長（9:16）の枠にし、要件は右カラムのタグで見せる
+  const dropZone = (
+    <div
+      onDragOver={(e) => {
+        e.preventDefault();
+        setDragOver(true);
+      }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setDragOver(false);
+        handleFiles(e.dataTransfer.files);
+      }}
+      onClick={() => !busy && config && fileInputRef.current?.click()}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && fileInputRef.current?.click()}
+      className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed cursor-pointer transition-colors text-center ${
+        isAdmin ? 'p-4 aspect-[9/16]' : 'p-8'
+      } ${dragOver ? 'border-blue-400 bg-blue-500/10' : 'border-slate-700 bg-slate-900 hover:border-slate-500'}`}
+    >
+      {phase === 'preparing' ? (
+        <>
+          <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+          <p className="text-sm text-slate-300">動画を読み込み、サムネイルを生成しています…</p>
+        </>
+      ) : (
+        <>
+          <UploadCloud className="w-8 h-8 text-blue-400" />
+          <p className="text-sm text-slate-200 font-semibold">
+            {isAdmin ? (
+              <>
+                ここに動画を
+                <br />
+                ドラッグ&ドロップ
+              </>
+            ) : (
+              'ここに動画をドラッグ&ドロップ'
+            )}
+          </p>
+          <p className="text-xs text-slate-400">
+            {isAdmin ? 'またはクリックして選択' : 'またはクリックしてファイルを選択'}
+          </p>
+          {config && !isAdmin && (
+            <p className="text-[11px] text-slate-500">
+              MP4 / WebM / MOV ・ 最大 {formatBytes(config.max_upload_bytes)} ・ 最長{' '}
+              {formatDuration(config.max_video_duration_sec)}（縦型 9:16 推奨）
+            </p>
+          )}
+        </>
+      )}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="video/mp4,video/webm,video/quicktime,.mp4,.m4v,.webm,.mov"
+        className="hidden"
+        onChange={(e) => handleFiles(e.target.files)}
+      />
+    </div>
+  );
+
+  const preview = selected && (
+    <div className="relative w-full aspect-[9/16] rounded-lg overflow-hidden bg-black border border-slate-800">
+      <video
+        src={selected.previewUrl}
+        poster={selected.thumbnailUrl ?? undefined}
+        controls
+        playsInline
+        muted
+        className="w-full h-full object-cover"
+      />
+    </div>
+  );
+
+  const thumbnail = selected?.thumbnailUrl && (
+    <div className="flex items-center gap-2">
+      <img
+        src={selected.thumbnailUrl}
+        alt="自動生成サムネイル"
+        className="w-10 h-14 object-cover rounded border border-slate-700"
+      />
+      <span className="text-[11px] text-slate-400">サムネイルを自動生成しました</span>
+    </div>
+  );
+
+  const fileInfo = selected && (
+    <div className="flex items-start gap-2">
+      <FileVideo className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+      <div className="min-w-0 flex-1">
+        <p className="text-sm text-white truncate">{selected.file.name}</p>
+        <p className="text-[11px] text-slate-400">
+          {formatBytes(selected.file.size)} ・ {formatDuration(selected.meta.durationSec)} ・ {selected.meta.width}×
+          {selected.meta.height}
+        </p>
+      </div>
+      {!busy && (
+        <button
+          type="button"
+          onClick={startOver}
+          className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+          title="選び直す"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      )}
+    </div>
+  );
+
+  // admin はファイル選択前から薄く表示し、次に入力する項目を先に見せる
+  const fieldsDisabled = busy || !selected;
+  const fields = (
+    <>
+      <label className="flex flex-col gap-1 text-xs text-slate-400">
+        タイトル
+        <input
+          className={inputClass}
+          value={title}
+          maxLength={100}
+          onChange={(e) => setTitle(e.target.value)}
+          disabled={fieldsDisabled}
+          placeholder="例: 新商品を使ってみた"
+        />
+      </label>
+      <label className="flex flex-col gap-1 text-xs text-slate-400">
+        説明（任意）
+        <textarea
+          className={`${inputClass} min-h-[72px]`}
+          value={description}
+          maxLength={2000}
+          onChange={(e) => setDescription(e.target.value)}
+          disabled={fieldsDisabled}
+        />
+      </label>
+      {isAdmin && (
+        <label className="flex items-center gap-2 text-xs text-slate-300">
+          <input
+            type="checkbox"
+            checked={autoApprove}
+            onChange={(e) => setAutoApprove(e.target.checked)}
+            disabled={fieldsDisabled}
+          />
+          審査を省略してすぐに公開する
+        </label>
+      )}
+    </>
+  );
+
+  const status = (
+    <>
       {warning && (
         <p className="text-xs text-amber-200 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2">
           {warning}
@@ -220,29 +248,92 @@ export const UploadPanel: React.FC<UploadPanelProps> = ({ mode, onUploaded }) =>
           </div>
         </div>
       )}
+    </>
+  );
 
-      {selected && (
-        <div className="flex gap-2">
-          <button
-            type="submit"
-            disabled={busy}
-            className="flex-1 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer"
-          >
-            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
-            {mode === 'admin' && autoApprove ? 'アップロードして公開' : 'アップロードして審査に出す'}
-          </button>
-          {phase === 'error' && (
-            <button
-              type="button"
-              onClick={startOver}
-              className="px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer"
-              title="最初からやり直す"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
+  const actions = (
+    <div className="flex gap-2">
+      <button
+        type="submit"
+        disabled={busy || !selected}
+        className="flex-1 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer"
+      >
+        {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
+        {isAdmin && autoApprove ? 'アップロードして公開' : 'アップロードして審査に出す'}
+      </button>
+      {phase === 'error' && (
+        <button
+          type="button"
+          onClick={startOver}
+          className="px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer"
+          title="最初からやり直す"
+        >
+          <RotateCcw className="w-4 h-4" />
+        </button>
+      )}
+    </div>
+  );
+
+  // ---------------------------------------------------------------- admin: 左に動画、右に説明と入力欄
+
+  if (isAdmin) {
+    return (
+      <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-5">
+        <div className="w-full max-w-48 mx-auto sm:mx-0 sm:w-44 shrink-0 flex flex-col gap-2">
+          {selected ? (
+            <>
+              {preview}
+              {thumbnail}
+            </>
+          ) : (
+            dropZone
           )}
         </div>
+        <div className="flex-1 min-w-0 flex flex-col gap-3">
+          {intro && <div className="text-xs text-slate-400 leading-relaxed">{intro}</div>}
+          {config && (
+            <ul className="flex flex-wrap gap-1.5" aria-label="アップロードできる動画の条件">
+              {[
+                'MP4 / WebM / MOV',
+                `最大 ${formatBytes(config.max_upload_bytes)}`,
+                `最長 ${formatDuration(config.max_video_duration_sec)}`,
+                '縦型 9:16 推奨',
+              ].map((label) => (
+                <li key={label} className="text-[11px] text-slate-400 border border-slate-700 rounded-full px-2 py-0.5">
+                  {label}
+                </li>
+              ))}
+            </ul>
+          )}
+          {fileInfo}
+          <div className={`flex flex-col gap-3 transition-opacity ${selected ? '' : 'opacity-50'}`}>
+            {fields}
+            {status}
+            {actions}
+          </div>
+        </div>
+      </form>
+    );
+  }
+
+  // ---------------------------------------------------------------- user: 従来どおり（スマホ中心）
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      {!selected ? (
+        dropZone
+      ) : (
+        <div className="flex gap-4 flex-col sm:flex-row">
+          <div className="w-full sm:w-40 shrink-0">{preview}</div>
+          <div className="flex-1 flex flex-col gap-2 min-w-0">
+            {fileInfo}
+            {thumbnail}
+            {fields}
+          </div>
+        </div>
       )}
+      {status}
+      {selected && actions}
     </form>
   );
 };
