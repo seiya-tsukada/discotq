@@ -1,10 +1,19 @@
 #!/usr/bin/env python
 """管理者アカウントの作成・登録・パスワード再設定を行う CLI。
 
-使い方（リポジトリ直下で、DATABASE_URL などの環境変数を設定して実行）:
+Vercel 用の DATABASE_URL（transaction pooler・6543・パスワード入り）は使わない。
+ポート 5432（Supabase の直接接続か session pooler）に接続し、DB のパスワードは
+psql と同じく実行時に入力する（画面に表示せず、シェルの履歴にも残らない）。
 
-    # 新規ユーザーを作成して管理者にする（パスワードは対話入力。メール確認済みとして作成）
-    .venv/bin/python scripts/create_admin.py create admin@example.com
+使い方（リポジトリ直下で実行。接続先は --host / --user か、PGHOST / PGUSER で指定）:
+
+    # 新規ユーザーを作成して管理者にする（メール確認済みとして作成）
+    .venv/bin/python scripts/create_admin.py create admin@example.com \\
+        --host aws-0-ap-northeast-1.pooler.supabase.com --user postgres.<project-ref>
+
+    # 接続先は環境変数でも指定できる（psql と同じ PGHOST / PGPORT / PGUSER / PGDATABASE）
+    export PGHOST=aws-0-ap-northeast-1.pooler.supabase.com PGUSER=postgres.<project-ref>
+    .venv/bin/python scripts/create_admin.py list
 
     # 既存ユーザーを管理者にする / 外す
     .venv/bin/python scripts/create_admin.py grant user@example.com --note "審査担当"
@@ -13,10 +22,10 @@
     # パスワードを再設定する（全セッションを失効させる）
     .venv/bin/python scripts/create_admin.py reset-password admin@example.com
 
-    # 管理者一覧
-    .venv/bin/python scripts/create_admin.py list
+接続文字列で指定する場合は --db-url を使う。パスワードは含めないこと
+（例: postgresql://postgres.<project-ref>@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres）。
 
-DATABASE_URL 以外の設定は不要（このスクリプトは Settings を読み込まない）。
+DB のパスワードの入力を省くには、psql と同じく ~/.pgpass か PGPASSWORD を使える。
 """
 
 from __future__ import annotations
@@ -30,12 +39,110 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import psycopg  # noqa: E402
 from email_validator import EmailNotValidError, validate_email  # noqa: E402
+from psycopg.conninfo import conninfo_to_dict  # noqa: E402
+from psycopg.rows import dict_row  # noqa: E402
 
-from backend.app.db import Conn, connect  # noqa: E402
+from backend.app.db import Conn  # noqa: E402
 from backend.app.repositories import users as users_repo  # noqa: E402
 from backend.app.repositories.audit import write_audit_log  # noqa: E402
 from backend.app.security import PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, hash_password  # noqa: E402
+
+DEFAULT_PORT = "5432"
+TRANSACTION_POOLER_PORT = "6543"
+CONNECT_TIMEOUT_S = 10
+
+
+# ---------------------------------------------------------------- DB 接続
+
+
+def build_conn_params(
+    *,
+    db_url: str | None,
+    host: str | None,
+    port: str | None,
+    user: str | None,
+    dbname: str | None,
+) -> dict[str, str]:
+    """接続先を組み立てる。パスワードは含めない（実行時に入力させる）。
+
+    優先順位: --host などの個別指定 > --db-url > PGHOST などの環境変数 > 既定値（port=5432, dbname=postgres）。
+    """
+    params: dict[str, str] = {}
+    if db_url:
+        try:
+            params = {k: str(v) for k, v in conninfo_to_dict(db_url).items() if v is not None}
+        except psycopg.ProgrammingError:
+            sys.exit("--db-url の形式が正しくありません")
+        if params.get("password"):
+            sys.exit(
+                "--db-url にパスワードを含めないでください（「ユーザー名:パスワード@」の「:パスワード」を消す）。"
+                "パスワードは実行時に入力します"
+            )
+    for key, value in (("host", host), ("port", port), ("user", user), ("dbname", dbname)):
+        if value:
+            params[key] = value
+    for key, env in (("host", "PGHOST"), ("port", "PGPORT"), ("user", "PGUSER"), ("dbname", "PGDATABASE")):
+        if not params.get(key) and os.environ.get(env):
+            params[key] = os.environ[env]
+    params.setdefault("port", DEFAULT_PORT)
+    params.setdefault("dbname", "postgres")
+    params.setdefault("sslmode", "require")
+
+    if not params.get("host"):
+        sys.exit("接続先のホストを --host（または PGHOST / --db-url）で指定してください")
+    if not params.get("user"):
+        sys.exit("接続ユーザーを --user（または PGUSER / --db-url）で指定してください")
+    if params["port"] == TRANSACTION_POOLER_PORT:
+        sys.exit(
+            "ポート 6543（transaction pooler）は Vercel 用です。"
+            "このスクリプトでは 5432（直接接続か session pooler）を使ってください"
+        )
+    return params
+
+
+def describe_target(params: dict[str, str]) -> str:
+    return f"{params['user']}@{params['host']}:{params['port']}/{params['dbname']}"
+
+
+def _needs_password(error: psycopg.OperationalError) -> bool:
+    # libpq はパスワードが無いと "fe_sendauth: no password supplied" を返す（psql と同じ判定）
+    return "no password supplied" in str(error)
+
+
+def _connect(params: dict[str, str], password: str | None = None) -> Conn:
+    kwargs: dict[str, Any] = dict(params)
+    if password is not None:
+        kwargs["password"] = password
+    return psycopg.connect(
+        **kwargs, prepare_threshold=None, row_factory=dict_row, connect_timeout=CONNECT_TIMEOUT_S
+    )
+
+
+def connect_with_prompt(params: dict[str, str]) -> Conn:
+    """psql と同じく、まずパスワードなしで接続し、要求されたら入力させて接続し直す。
+
+    PGPASSWORD や ~/.pgpass があれば libpq がそれを使うので、入力は求めない。
+    """
+    target = describe_target(params)
+    try:
+        return _connect(params)
+    except psycopg.OperationalError as e:
+        if not _needs_password(e):
+            sys.exit(f"DB に接続できません（{target}）: {_one_line(e)}")
+    password = getpass.getpass(f"DB パスワード（{target}）: ")
+    try:
+        return _connect(params, password)
+    except psycopg.OperationalError as e:
+        sys.exit(f"DB に接続できません（{target}）: {_one_line(e)}")
+
+
+def _one_line(error: Exception) -> str:
+    return " ".join(str(error).split())
+
+
+# ---------------------------------------------------------------- 管理者の操作
 
 
 def _prompt_password() -> str:
@@ -43,8 +150,8 @@ def _prompt_password() -> str:
     if env:
         password = env
     else:
-        password = getpass.getpass("パスワード: ")
-        if password != getpass.getpass("パスワード（確認）: "):
+        password = getpass.getpass("管理者アカウントのパスワード: ")
+        if password != getpass.getpass("管理者アカウントのパスワード（確認）: "):
             sys.exit("パスワードが一致しません")
     if not PASSWORD_MIN_LENGTH <= len(password) <= PASSWORD_MAX_LENGTH:
         sys.exit(f"パスワードは {PASSWORD_MIN_LENGTH}〜{PASSWORD_MAX_LENGTH} 文字にしてください")
@@ -136,26 +243,41 @@ def cmd_list(conn: Conn, _: argparse.Namespace) -> None:
         print("（管理者はいません）")
 
 
-def main() -> None:
+# ---------------------------------------------------------------- 引数
+
+
+def build_parser() -> argparse.ArgumentParser:
+    # 接続オプションは各サブコマンドに持たせ、サブコマンドの前後どちらにも書けるようにする
+    conn_opts = argparse.ArgumentParser(add_help=False)
+    g = conn_opts.add_argument_group("DB 接続（ポート 5432。パスワードは実行時に入力）")
+    g.add_argument("--db-url", default=None, help="パスワードを含まない接続文字列")
+    g.add_argument("--host", default=None, help="ホスト（既定: PGHOST）")
+    g.add_argument("--port", default=None, help=f"ポート（既定: PGPORT か {DEFAULT_PORT}）")
+    g.add_argument("--user", default=None, help="ユーザー（既定: PGUSER）")
+    g.add_argument("--dbname", default=None, help="データベース名（既定: PGDATABASE か postgres）")
+
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
-    p = sub.add_parser("create", help="ユーザーを作成して管理者にする")
+    p = sub.add_parser("create", parents=[conn_opts], help="ユーザーを作成して管理者にする")
     p.add_argument("email")
     p.add_argument("--name", default=None, help="表示名")
     p.add_argument("--note", default=None, help="メモ（担当など）")
-    p = sub.add_parser("grant", help="既存ユーザーを管理者にする")
+    p = sub.add_parser("grant", parents=[conn_opts], help="既存ユーザーを管理者にする")
     p.add_argument("email")
     p.add_argument("--note", default=None)
-    p = sub.add_parser("revoke", help="管理者から外す")
+    p = sub.add_parser("revoke", parents=[conn_opts], help="管理者から外す")
     p.add_argument("email")
-    p = sub.add_parser("reset-password", help="パスワードを再設定する")
+    p = sub.add_parser("reset-password", parents=[conn_opts], help="パスワードを再設定する")
     p.add_argument("email")
-    sub.add_parser("list", help="管理者一覧")
-    args = parser.parse_args()
+    sub.add_parser("list", parents=[conn_opts], help="管理者一覧")
+    return parser
 
-    database_url = os.environ.get("DATABASE_URL")
-    if not database_url:
-        sys.exit("DATABASE_URL を設定してください")
+
+def main(argv: list[str] | None = None) -> None:
+    args = build_parser().parse_args(argv)
+    params = build_conn_params(
+        db_url=args.db_url, host=args.host, port=args.port, user=args.user, dbname=args.dbname
+    )
     handlers = {
         "create": cmd_create,
         "grant": cmd_grant,
@@ -163,7 +285,7 @@ def main() -> None:
         "reset-password": cmd_reset_password,
         "list": cmd_list,
     }
-    with connect(database_url) as conn:
+    with connect_with_prompt(params) as conn:
         handlers[args.command](conn, args)
 
 
