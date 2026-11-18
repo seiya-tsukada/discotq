@@ -160,6 +160,7 @@ export const adminApi = {
     request<AdminVideo>('POST', `/admin/videos/${id}/unpublish`, { body: { reason: reason || null } }),
   setPickup: (id: string, pickedUp: boolean) =>
     request<AdminVideo>('POST', `/admin/videos/${id}/pickup`, { body: { picked_up: pickedUp } }),
+  remove: (id: string) => request<AdminVideo>('POST', `/admin/videos/${id}/delete`),
   createIntent: (body: UploadIntentRequest) => request<UploadIntentResponse>('POST', '/admin/uploads/intent', { body }),
 };
 

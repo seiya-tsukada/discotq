@@ -174,6 +174,15 @@ def pickup(video_id: UUID, req: PickupRequest, conn: ConnDep, admin: AdminDep) -
     return to_admin_video(row)
 
 
+@router.post("/videos/{video_id}/delete", response_model=AdminVideo)
+def delete(video_id: UUID, conn: ConnDep, storage: StorageDep, admin: AdminDep) -> AdminVideo:
+    """動画を削除する（ステータスは問わない）。アップロード未完了なら private の途中ファイルも消す。"""
+    video_service.admin_delete_video(conn, storage, video=_load(conn, video_id), admin_id=admin.id)
+    row = videos_repo.get_admin_video(conn, video_id)
+    assert row is not None
+    return to_admin_video(row)
+
+
 @router.post("/uploads/intent", response_model=UploadIntentResponse, status_code=201)
 def admin_upload_intent(
     req: AdminUploadIntentRequest,

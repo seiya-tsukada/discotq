@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CheckCircle2, EyeOff, Loader2, Star, XCircle } from 'lucide-react';
+import { CheckCircle2, EyeOff, Loader2, Star, Trash2, XCircle } from 'lucide-react';
 import { StatusBadge } from '../../components/StatusBadge';
 import { adminApi, errorMessage } from '../../lib/api';
 import { formatBytes, formatDuration } from '../../lib/videoFile';
@@ -18,6 +18,8 @@ const ACTION_LABELS: Record<string, string> = {
   auto_approve: '自動承認',
 };
 
+const UPLOAD_INCOMPLETE: string[] = ['pending_upload', 'failed'];
+
 const fmt = (iso: string | null) => (iso ? new Date(iso).toLocaleString('ja-JP') : '-');
 
 // 審査対象の詳細・プレビュー・承認/却下/非公開化
@@ -26,7 +28,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({ video, onUpdated, onEr
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [detail, setDetail] = useState<AdminVideoDetail | null>(null);
   const [reason, setReason] = useState('');
-  const [busy, setBusy] = useState<'approve' | 'reject' | 'unpublish' | 'pickup' | null>(null);
+  const [busy, setBusy] = useState<'approve' | 'reject' | 'unpublish' | 'pickup' | 'delete' | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -38,7 +40,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({ video, onUpdated, onEr
     // 公開中は public URL、それ以外は private バケットの署名付き URL（5分）で再生する
     if (video.public_url) {
       setPreviewUrl(video.public_url);
-    } else if (!['pending_upload', 'failed'].includes(video.status)) {
+    } else if (!UPLOAD_INCOMPLETE.includes(video.status)) {
       adminApi
         .previewUrl(video.id)
         .then((r) => !cancelled && setPreviewUrl(r.video_url))
@@ -89,7 +91,26 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({ video, onUpdated, onEr
     }
   };
 
-  const canPickup = video.status !== 'deleted';
+  const handleDelete = async () => {
+    const label = video.title || '無題の動画';
+    const note = UPLOAD_INCOMPLETE.includes(video.status)
+      ? 'アップロード途中のファイルも削除されます。'
+      : '公開中の場合はフィードからも削除されます。';
+    if (!window.confirm(`「${label}」を削除しますか？${note}この操作は取り消せません。`)) return;
+    setBusy('delete');
+    try {
+      const updated = await adminApi.remove(video.id);
+      onUpdated(updated, `「${label}」を削除しました`);
+    } catch (e) {
+      onError(errorMessage(e));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  // アップロードが終わっていない動画はフィードに出ないのでピックアップを付けさせない（外すのは可）
+  const canPickup = video.status !== 'deleted' && (video.is_pickup || !UPLOAD_INCOMPLETE.includes(video.status));
+  const canDelete = video.status !== 'deleted';
   const canApprove = ['in_review', 'rejected', 'unpublished'].includes(video.status);
   const canReject = ['in_review', 'approved', 'unpublished'].includes(video.status);
   const canUnpublish = video.status === 'approved';
@@ -109,7 +130,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({ video, onUpdated, onEr
             />
           ) : previewError ? (
             <p className="text-[11px] text-rose-300 p-2 text-center">{previewError}</p>
-          ) : ['pending_upload', 'failed'].includes(video.status) ? (
+          ) : UPLOAD_INCOMPLETE.includes(video.status) ? (
             <p className="text-[11px] text-slate-500 p-2 text-center">プレビューできません</p>
           ) : (
             <Loader2 className="w-5 h-5 text-slate-500 animate-spin" />
@@ -222,6 +243,18 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({ video, onUpdated, onEr
           >
             {busy === 'pickup' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Star className="w-4 h-4" />}
             {video.is_pickup ? 'ピックアップを外す' : 'ピックアップする'}
+          </button>
+        )}
+        {canDelete && (
+          <button
+            onClick={handleDelete}
+            disabled={busy !== null}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-800 hover:bg-rose-900/60 border border-rose-500/40 disabled:opacity-60 text-rose-300 text-xs font-semibold cursor-pointer ${
+              canPickup ? '' : 'sm:ml-auto'
+            }`}
+          >
+            {busy === 'delete' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+            削除
           </button>
         )}
       </div>

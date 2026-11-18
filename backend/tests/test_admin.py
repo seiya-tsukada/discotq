@@ -8,6 +8,7 @@ from backend.app.db import Conn
 from backend.app.email import ConsoleEmailSender
 from backend.app.storage.r2 import PUBLIC_CACHE_CONTROL, R2Storage
 from backend.tests.conftest import (
+    PRIVATE,
     PUBLIC,
     intent_payload,
     make_admin,
@@ -272,3 +273,61 @@ def test_feed_shows_display_name_of_user_uploader(
     item = make_client().get("/api/videos/feed").json()["items"][0]
     assert item["uploader_name"] == "たろう"
     assert item["is_pickup"] is False
+
+
+def test_admin_delete_pending_upload_removes_private_objects(
+    make_client: Any, storage: R2Storage, db: Conn, outbox: ConsoleEmailSender
+) -> None:
+    admin = _admin(make_client, db, outbox)
+    intent = admin.post("/api/admin/uploads/intent", json=intent_payload()).json()
+    vid = intent["video_id"]
+    # PUT は済んだが complete が来ていない状態
+    put_uploads(storage, intent)
+
+    # アップロード未完了の動画はピックアップを付けられない
+    assert admin.post(f"/api/admin/videos/{vid}/pickup", json={"picked_up": True}).status_code == 409
+
+    res = admin.post(f"/api/admin/videos/{vid}/delete")
+    assert res.status_code == 200, res.text
+    assert res.json()["status"] == "deleted"
+    assert not object_exists(storage, PRIVATE, f"videos/{vid}/original.mp4")
+    assert not object_exists(storage, PRIVATE, f"videos/{vid}/thumb.jpg")
+    row = db.execute("select deleted_at from discotq.videos where id = %s", (vid,)).fetchone()
+    assert row is not None and row["deleted_at"] is not None
+    log = db.execute(
+        "select actor_type, payload from discotq.audit_logs where target_id = %s and action = 'video.admin_delete'",
+        (vid,),
+    ).fetchone()
+    assert log is not None
+    assert log["actor_type"] == "admin" and log["payload"]["previous_status"] == "pending_upload"
+
+    # 削除後に complete が来ても受け付けない。再削除は冪等
+    assert admin.post(f"/api/uploads/{vid}/complete").status_code == 409
+    assert admin.post(f"/api/admin/videos/{vid}/delete").status_code == 200
+
+
+def test_admin_delete_approved_video_keeps_private_original(
+    make_client: Any, anon_client: TestClient, storage: R2Storage, db: Conn, outbox: ConsoleEmailSender
+) -> None:
+    vid = upload_video(anon_client, storage)["video_id"]
+    admin = _admin(make_client, db, outbox)
+    admin.post(f"/api/admin/videos/{vid}/approve")
+    admin.post(f"/api/admin/videos/{vid}/pickup", json={"picked_up": True})
+
+    res = admin.post(f"/api/admin/videos/{vid}/delete")
+    assert res.status_code == 200, res.text
+    body = res.json()
+    assert body["status"] == "deleted" and body["public_url"] is None and body["is_pickup"] is False
+    assert not object_exists(storage, PUBLIC, f"videos/{vid}/original.mp4")
+    # 原本は 30 日後の purge まで残す
+    assert object_exists(storage, PRIVATE, f"videos/{vid}/original.mp4")
+    assert make_client().get("/api/videos/feed").json()["items"] == []
+    # 削除済みは戻せない
+    assert admin.post(f"/api/admin/videos/{vid}/approve").status_code == 409
+
+
+def test_admin_delete_requires_admin(
+    make_client: Any, anon_client: TestClient, storage: R2Storage
+) -> None:
+    vid = upload_video(anon_client, storage)["video_id"]
+    assert anon_client.post(f"/api/admin/videos/{vid}/delete").status_code in (401, 403)
