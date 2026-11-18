@@ -32,6 +32,8 @@ const STAT_ORDER: VideoStatus[] = [
 const AdminDashboard: React.FC = () => {
   const { showNotification } = useApp();
   const [tab, setTab] = useState<Tab>('queue');
+  // 「運営動画のアップロード」タブを押すたびに増やし、完了画面からでも入力画面へ戻す
+  const [uploadResetSignal, setUploadResetSignal] = useState(0);
   const [stats, setStats] = useState<AdminStats | null>(null);
 
   const loadStats = useCallback(() => {
@@ -73,7 +75,10 @@ const AdminDashboard: React.FC = () => {
         {TABS.map((t) => (
           <button
             key={t.id}
-            onClick={() => setTab(t.id)}
+            onClick={() => {
+              setTab(t.id);
+              if (t.id === 'upload') setUploadResetSignal((n) => n + 1);
+            }}
             className={`px-3 py-2 text-xs font-semibold whitespace-nowrap border-b-2 -mb-px cursor-pointer ${
               tab === t.id ? 'border-blue-500 text-white' : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
@@ -118,7 +123,7 @@ const AdminDashboard: React.FC = () => {
         <section className="p-4 rounded-xl bg-slate-900/50 border border-slate-800">
           <UploadPanel
             mode="admin"
-            intro="運営が選定した動画（source=platform）を登録します。「審査を省略」を選ぶと、アップロード完了と同時に公開されます。"
+            resetSignal={uploadResetSignal}
             onUploaded={(v) =>
               handleChanged(v.status === 'approved' ? '運営動画を公開しました' : '運営動画を審査キューに追加しました')
             }
