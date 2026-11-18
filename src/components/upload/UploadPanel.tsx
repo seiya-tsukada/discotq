@@ -20,6 +20,7 @@ export const UploadPanel: React.FC<UploadPanelProps> = ({ mode, resetSignal, onU
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [autoApprove, setAutoApprove] = useState(false);
+  const [pickup, setPickup] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -34,7 +35,7 @@ export const UploadPanel: React.FC<UploadPanelProps> = ({ mode, resetSignal, onU
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selected) return;
-    const done = await upload({ title, description, autoApprove });
+    const done = await upload({ title, description, autoApprove, pickup });
     if (done) {
       setTitle('');
       setDescription('');
@@ -212,6 +213,17 @@ export const UploadPanel: React.FC<UploadPanelProps> = ({ mode, resetSignal, onU
             disabled={fieldsDisabled}
           />
           審査を省略してすぐに公開する
+        </label>
+      )}
+      {isAdmin && (
+        <label className="flex items-center gap-2 text-xs text-slate-300">
+          <input
+            type="checkbox"
+            checked={pickup}
+            onChange={(e) => setPickup(e.target.checked)}
+            disabled={fieldsDisabled}
+          />
+          運営ピックアップにする
         </label>
       )}
     </>

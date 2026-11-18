@@ -46,6 +46,8 @@ def feed(
         FeedItem(
             id=r["id"],
             source=r["source"],
+            is_pickup=r["picked_up_at"] is not None,
+            uploader_name=r["uploader_name"],
             title=r["title"],
             description=r["description"],
             video_url=r["public_url"],

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Film, Loader2, RotateCw } from 'lucide-react';
+import { Film, Loader2, RotateCw, Star } from 'lucide-react';
 import { StatusBadge } from '../../components/StatusBadge';
 import { formatDuration, STATUS_LABELS } from '../../lib/videoFile';
 import type { AdminVideo, VideoSource, VideoStatus } from '../../types/api';
@@ -106,6 +106,7 @@ export const VideoListPane: React.FC<VideoListPaneProps> = ({ fixedStatus, empty
                   <div className="flex items-center gap-1.5">
                     <StatusBadge status={v.status} />
                     <span className="text-[10px] text-slate-500">{v.source === 'platform' ? '運営' : 'ユーザー'}</span>
+                    {v.is_pickup && <Star className="w-3 h-3 text-amber-400 fill-current" aria-label="ピックアップ" />}
                   </div>
                   <p className="text-xs text-white truncate mt-0.5">{v.title || '無題の動画'}</p>
                   <p className="text-[10px] text-slate-500">

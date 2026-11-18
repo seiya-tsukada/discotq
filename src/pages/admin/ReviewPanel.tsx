@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CheckCircle2, EyeOff, Loader2, XCircle } from 'lucide-react';
+import { CheckCircle2, EyeOff, Loader2, Star, XCircle } from 'lucide-react';
 import { StatusBadge } from '../../components/StatusBadge';
 import { adminApi, errorMessage } from '../../lib/api';
 import { formatBytes, formatDuration } from '../../lib/videoFile';
@@ -26,7 +26,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({ video, onUpdated, onEr
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [detail, setDetail] = useState<AdminVideoDetail | null>(null);
   const [reason, setReason] = useState('');
-  const [busy, setBusy] = useState<'approve' | 'reject' | 'unpublish' | null>(null);
+  const [busy, setBusy] = useState<'approve' | 'reject' | 'unpublish' | 'pickup' | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -74,6 +74,22 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({ video, onUpdated, onEr
     }
   };
 
+  const togglePickup = async () => {
+    setBusy('pickup');
+    try {
+      const updated = await adminApi.setPickup(video.id, !video.is_pickup);
+      onUpdated(
+        updated,
+        `「${video.title || '無題の動画'}」${updated.is_pickup ? 'をピックアップしました' : 'のピックアップを外しました'}`
+      );
+    } catch (e) {
+      onError(errorMessage(e));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const canPickup = video.status !== 'deleted';
   const canApprove = ['in_review', 'rejected', 'unpublished'].includes(video.status);
   const canReject = ['in_review', 'approved', 'unpublished'].includes(video.status);
   const canUnpublish = video.status === 'approved';
@@ -105,6 +121,12 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({ video, onUpdated, onEr
             <span className="text-[11px] text-slate-400">
               {video.source === 'platform' ? '運営投稿' : 'ユーザー投稿'}
             </span>
+            {video.is_pickup && (
+              <span className="flex items-center gap-0.5 rounded-full bg-amber-400 text-amber-950 px-1.5 py-0.5 text-[10px] font-bold">
+                <Star className="w-3 h-3 fill-current" />
+                ピックアップ
+              </span>
+            )}
           </div>
           <p className="text-sm font-semibold text-white break-words">{video.title || '無題の動画'}</p>
           {video.description && <p className="text-slate-300 whitespace-pre-wrap break-words">{video.description}</p>}
@@ -186,6 +208,20 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({ video, onUpdated, onEr
           >
             {busy === 'unpublish' ? <Loader2 className="w-4 h-4 animate-spin" /> : <EyeOff className="w-4 h-4" />}
             非公開にする
+          </button>
+        )}
+        {canPickup && (
+          <button
+            onClick={togglePickup}
+            disabled={busy !== null}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg disabled:opacity-60 text-xs font-semibold cursor-pointer sm:ml-auto ${
+              video.is_pickup
+                ? 'bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-400/40'
+                : 'bg-amber-400 hover:bg-amber-300 text-amber-950'
+            }`}
+          >
+            {busy === 'pickup' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Star className="w-4 h-4" />}
+            {video.is_pickup ? 'ピックアップを外す' : 'ピックアップする'}
           </button>
         )}
       </div>
