@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Copy, Check, Share2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { uploaderDisplayName } from '../lib/uploader';
 import { SHARE_COPY_FEEDBACK_DURATION_MS } from '../constants/timing';
 
 export const ShareModal: React.FC = () => {
@@ -55,7 +56,7 @@ export const ShareModal: React.FC = () => {
             )}
             <div className="flex-1 min-w-0">
               <span className="text-[10px] text-slate-400 font-semibold block">
-                {currentVideo.source === 'platform' ? 'DiscoTQ 編集部' : 'ユーザー投稿'}
+                {uploaderDisplayName(currentVideo)}
               </span>
               <p className="text-xs font-semibold text-white truncate">{currentVideo.title || '無題の動画'}</p>
               <span className="text-[10px] text-blue-400 font-medium">公式プロモーション</span>

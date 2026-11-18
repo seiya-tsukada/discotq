@@ -53,6 +53,8 @@ class UploadIntentRequest(BaseModel):
 class AdminUploadIntentRequest(UploadIntentRequest):
     # True なら complete 時に審査を省略して承認済みにする
     auto_approve: bool = False
+    # True なら登録時点で運営ピックアップにする
+    pickup: bool = False
 
 
 class PresignedPut(BaseModel):
@@ -71,6 +73,9 @@ class UploadIntentResponse(BaseModel):
 class FeedItem(BaseModel):
     id: UUID
     source: VideoSource
+    is_pickup: bool
+    # ユーザー投稿の投稿者の表示名（未設定・匿名・運営投稿は null）
+    uploader_name: str | None
     title: str
     description: str
     video_url: str
@@ -148,6 +153,8 @@ class AdminVideo(BaseModel):
     approved_by_email: str | None
     approved_at: datetime | None
     auto_approve: bool
+    is_pickup: bool
+    picked_up_at: datetime | None
     created_at: datetime
     updated_at: datetime
 
@@ -165,6 +172,10 @@ class PreviewUrlResponse(BaseModel):
     video_url: str
     thumb_url: str | None
     expires_in: int
+
+
+class PickupRequest(BaseModel):
+    picked_up: bool
 
 
 class RejectRequest(BaseModel):

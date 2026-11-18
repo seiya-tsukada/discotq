@@ -105,6 +105,7 @@ def create_upload_intent(
     source: str,
     principal: Principal,
     auto_approve: bool = False,
+    pickup: bool = False,
 ) -> UploadIntentResponse:
     validate_upload_request(req, settings)
     if source == "user":
@@ -133,6 +134,7 @@ def create_upload_intent(
         width=req.width,
         height=req.height,
         auto_approve=auto_approve,
+        picked_up_by=principal.user.id if pickup and principal.user else None,
     )
     actor_type, actor_id = principal.actor
     write_audit_log(
@@ -148,6 +150,7 @@ def create_upload_intent(
             "mime_type": req.mime_type,
             "size_bytes": req.size_bytes,
             "auto_approve": auto_approve,
+            "pickup": pickup,
         },
     )
 
@@ -323,6 +326,31 @@ def unpublish_video(
         conn, video["id"], status="unpublished", public_url=None, thumb_url=None
     )
     _record_review(conn, video=video, reviewer_id=reviewer_id, action="unpublish", reason=reason)
+    return updated
+
+
+def set_pickup(
+    conn: Conn, *, video: dict[str, Any], admin_id: UUID, picked_up: bool
+) -> dict[str, Any]:
+    """運営ピックアップを付け外しする。ステータスは問わない（削除済みのみ不可）。"""
+    if video["status"] == "deleted":
+        raise conflict("invalid_status", "削除済みの動画はピックアップできません")
+    if (video["picked_up_at"] is not None) == picked_up:
+        return video
+    updated = videos_repo.update_video(
+        conn,
+        video["id"],
+        picked_up_at=datetime.now(UTC) if picked_up else None,
+        picked_up_by=admin_id if picked_up else None,
+    )
+    write_audit_log(
+        conn,
+        actor_type="admin",
+        actor_id=str(admin_id),
+        action="video.pickup" if picked_up else "video.unpickup",
+        target_type="video",
+        target_id=str(video["id"]),
+    )
     return updated
 
 

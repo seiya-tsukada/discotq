@@ -10,7 +10,6 @@ import { CardTopBar } from './feed/CardTopBar';
 import { WatchRewardRing } from './feed/WatchRewardRing';
 import { GuestClaimPrompt } from './feed/GuestClaimPrompt';
 import { ActionRail } from './feed/ActionRail';
-import { VideoInfoOverlay } from './feed/VideoInfoOverlay';
 
 interface VideoCardProps {
   video: FeedVideo;
@@ -136,7 +135,7 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, isActive }) => {
 
       {justClaimedEffect && <ClaimSuccessEffect rewardPoints={rewardPoints} />}
 
-      <CardTopBar source={video.source} isMuted={isMuted} onToggleSound={toggleSound} />
+      <CardTopBar video={video} isMuted={isMuted} onToggleSound={toggleSound} />
 
       <WatchRewardRing
         rewardPoints={rewardPoints}
@@ -152,8 +151,6 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, isActive }) => {
       )}
 
       <ActionRail video={video} isLiked={isLiked} isBookmarked={isBookmarked} />
-
-      <VideoInfoOverlay video={video} />
     </div>
   );
 };

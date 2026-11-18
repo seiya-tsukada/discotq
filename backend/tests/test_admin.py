@@ -210,3 +210,65 @@ def test_feed_cache_headers_do_not_let_browsers_serve_stale(make_client: Any) ->
     res = make_client().get("/api/videos/feed")
     assert res.headers["cache-control"] == "public, max-age=0, must-revalidate"
     assert "stale-while-revalidate" in res.headers["cdn-cache-control"]
+
+
+def test_pickup_can_be_toggled_on_any_video(
+    make_client: Any, anon_client: TestClient, storage: R2Storage, db: Conn, outbox: ConsoleEmailSender
+) -> None:
+    vid = upload_video(anon_client, storage)["video_id"]
+    admin = _admin(make_client, db, outbox)
+    viewer = make_client()
+
+    # 審査中でも付けられる。公開状態は変わらない
+    res = admin.post(f"/api/admin/videos/{vid}/pickup", json={"picked_up": True})
+    assert res.status_code == 200, res.text
+    assert res.json()["is_pickup"] is True and res.json()["picked_up_at"] is not None
+    assert res.json()["status"] == "in_review"
+    assert viewer.get("/api/videos/feed").json()["items"] == []
+
+    admin.post(f"/api/admin/videos/{vid}/approve")
+    item = viewer.get("/api/videos/feed").json()["items"][0]
+    assert item["is_pickup"] is True
+
+    # 外すとフィードからもラベルが消える。同じ値の再送は監査ログを増やさない
+    assert admin.post(f"/api/admin/videos/{vid}/pickup", json={"picked_up": False}).json()["is_pickup"] is False
+    assert admin.post(f"/api/admin/videos/{vid}/pickup", json={"picked_up": False}).status_code == 200
+    assert viewer.get("/api/videos/feed").json()["items"][0]["is_pickup"] is False
+    actions = db.execute(
+        "select action from discotq.audit_logs where target_id = %s and action like 'video.%%pickup' order by id",
+        (vid,),
+    ).fetchall()
+    assert [r["action"] for r in actions] == ["video.pickup", "video.unpickup"]
+
+    # 管理者以外は操作できない
+    assert viewer.post(f"/api/admin/videos/{vid}/pickup", json={"picked_up": True}).status_code in (401, 403)
+
+
+def test_admin_upload_can_start_as_pickup(
+    make_client: Any, storage: R2Storage, db: Conn, outbox: ConsoleEmailSender
+) -> None:
+    admin = _admin(make_client, db, outbox)
+    intent = admin.post("/api/admin/uploads/intent", json=intent_payload(auto_approve=True, pickup=True)).json()
+    put_uploads(storage, intent)
+    assert admin.post(f"/api/uploads/{intent['video_id']}/complete").status_code == 200
+    item = make_client().get("/api/videos/feed").json()["items"][0]
+    assert item["id"] == intent["video_id"]
+    assert item["is_pickup"] is True
+    # 運営投稿は管理者個人の表示名を出さない
+    assert item["uploader_name"] is None
+
+
+def test_feed_shows_display_name_of_user_uploader(
+    make_client: Any, storage: R2Storage, db: Conn, outbox: ConsoleEmailSender
+) -> None:
+    uploader = make_client()
+    user = signup(uploader, outbox)
+    db.execute("update discotq.users set display_name = 'たろう' where id = %s", (user["id"],))
+    named = upload_video(uploader, storage)["video_id"]
+    admin = _admin(make_client, db, outbox)
+    db.execute("update discotq.users set display_name = '運営の人' where email <> %s", (user["email"],))
+    admin.post(f"/api/admin/videos/{named}/approve")
+
+    item = make_client().get("/api/videos/feed").json()["items"][0]
+    assert item["uploader_name"] == "たろう"
+    assert item["is_pickup"] is False

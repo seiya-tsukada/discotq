@@ -168,6 +168,10 @@ create index if not exists videos_uploader_user_idx on discotq.videos (uploader_
 create index if not exists videos_anonymous_idx on discotq.videos (anonymous_id, created_at desc);
 create index if not exists videos_ip_hash_idx on discotq.videos (uploader_ip_hash, created_at desc);
 
+-- 運営ピックアップ（任意の動画に付与できる）。既存 DB にも足せるよう alter で追加する
+alter table discotq.videos add column if not exists picked_up_at timestamptz;
+alter table discotq.videos add column if not exists picked_up_by uuid references discotq.users (id) on delete set null;
+
 drop trigger if exists videos_set_updated_at on discotq.videos;
 create trigger videos_set_updated_at
   before update on discotq.videos
