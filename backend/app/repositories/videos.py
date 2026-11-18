@@ -141,7 +141,8 @@ def list_feed(
     return conn.execute(
         """
         select v.*,
-               case when v.source = 'user' then u.display_name end as uploader_name
+               case when v.source = 'user' then u.display_name end as uploader_name,
+               (select count(*) from discotq.video_likes l where l.video_id = v.id) as like_count
         from discotq.videos v
         left join discotq.users u on u.id = v.uploader_user_id
         where v.status = 'approved'

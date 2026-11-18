@@ -20,7 +20,7 @@ from backend.app.observability import (
     describe_db_target,
     describe_settings_error,
 )
-from backend.app.routers import admin, auth, health, me, public, uploads
+from backend.app.routers import admin, auth, engagement, health, me, public, uploads
 
 configure_logging()
 logger = logging.getLogger("discotq.startup")
@@ -75,7 +75,15 @@ def create_app() -> FastAPI:
         )
 
     api = APIRouter(prefix="/api")
-    for r in (health.router, public.router, uploads.router, me.router, admin.router, auth.router):
+    for r in (
+        health.router,
+        public.router,
+        uploads.router,
+        me.router,
+        engagement.router,
+        admin.router,
+        auth.router,
+    ):
         api.include_router(r)
     app.include_router(api)
     return app

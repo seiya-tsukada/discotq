@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { X, Send, MessageSquare } from 'lucide-react';
+import { X, Send, MessageSquare, LogIn } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export const CommentsModal: React.FC = () => {
-  const { isCommentsModalOpen, setIsCommentsModalOpen, currentVideo, comments, addComment, user } = useApp();
+  const { isCommentsModalOpen, setIsCommentsModalOpen, setIsAuthModalOpen, currentVideo, comments, addComment, user } =
+    useApp();
 
   const [commentInput, setCommentInput] = useState('');
 
@@ -64,24 +65,41 @@ export const CommentsModal: React.FC = () => {
           )}
         </div>
 
-        {/* Input Bar */}
-        <form onSubmit={handleSend} className="p-3 bg-slate-950 border-t border-slate-800 flex items-center gap-2">
-          <img src={user.avatar} alt={user.name} className="w-7 h-7 rounded-full object-cover shrink-0" />
-          <input
-            type="text"
-            placeholder={user.isLoggedIn ? 'コメントや質問を入力...' : 'ビジターとしてコメントを入力...'}
-            value={commentInput}
-            onChange={(e) => setCommentInput(e.target.value)}
-            className="flex-1 px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-blue-500"
-          />
-          <button
-            type="submit"
-            disabled={!commentInput.trim()}
-            className="p-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-600 text-white transition-colors cursor-pointer"
-          >
-            <Send className="w-4 h-4" />
-          </button>
-        </form>
+        {/* Input Bar（ゲストはコメントできないため、ログインへ案内する） */}
+        {!user.isLoggedIn ? (
+          <div className="p-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between gap-2">
+            <span className="text-xs text-slate-400">コメントするにはログインが必要です</span>
+            <button
+              type="button"
+              onClick={() => {
+                setIsCommentsModalOpen(false);
+                setIsAuthModalOpen(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors cursor-pointer"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              ログイン
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSend} className="p-3 bg-slate-950 border-t border-slate-800 flex items-center gap-2">
+            <img src={user.avatar} alt={user.name} className="w-7 h-7 rounded-full object-cover shrink-0" />
+            <input
+              type="text"
+              placeholder="コメントや質問を入力..."
+              value={commentInput}
+              onChange={(e) => setCommentInput(e.target.value)}
+              className="flex-1 px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-blue-500"
+            />
+            <button
+              type="submit"
+              disabled={!commentInput.trim()}
+              className="p-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-600 text-white transition-colors cursor-pointer"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );

@@ -18,8 +18,11 @@ export const createHistoryEntry = (
 export const calcLevel = (totalEarnedPoints: number, currentLevel: UserLevel): UserLevel =>
   LEVEL_THRESHOLDS.find((t) => totalEarnedPoints >= t.minTotalPoints)?.level ?? currentLevel;
 
-export const toggleId = (ids: string[], id: string): string[] =>
-  ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id];
+// on なら追加（重複させない）、off なら除去する
+export const setIdIn = (ids: string[], id: string, on: boolean): string[] => {
+  const without = ids.filter((x) => x !== id);
+  return on ? [id, ...without] : without;
+};
 
 const randomBlock = () => Math.random().toString(36).substring(2, 6).toUpperCase();
 

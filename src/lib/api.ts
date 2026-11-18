@@ -5,7 +5,10 @@ import type {
   AdminVideo,
   AdminVideosResponse,
   AuthUser,
+  BookmarkResponse,
   FeedResponse,
+  LikeResponse,
+  MyEngagementResponse,
   MyVideo,
   MyVideosResponse,
   PresignedPut,
@@ -133,6 +136,15 @@ export const videoApi = {
   myVideos: () => request<MyVideosResponse>('GET', '/me/videos'),
   deleteMyVideo: (videoId: string) => request<{ ok: boolean }>('DELETE', `/me/videos/${videoId}`),
   claim: () => request<{ claimed: number }>('POST', '/me/claim'),
+};
+
+// いいね・保存。ログイン中はアカウント、未ログインは X-Anonymous-Id で記録される
+export const engagementApi = {
+  mine: () => request<MyEngagementResponse>('GET', '/me/engagement'),
+  like: (videoId: string) => request<LikeResponse>('POST', `/videos/${videoId}/like`),
+  unlike: (videoId: string) => request<LikeResponse>('DELETE', `/videos/${videoId}/like`),
+  bookmark: (videoId: string) => request<BookmarkResponse>('POST', `/videos/${videoId}/bookmark`),
+  unbookmark: (videoId: string) => request<BookmarkResponse>('DELETE', `/videos/${videoId}/bookmark`),
 };
 
 export const adminApi = {

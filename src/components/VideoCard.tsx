@@ -23,14 +23,14 @@ const minWatchSecondsFor = (video: FeedVideo) =>
     : DEFAULT_MIN_WATCH_SECONDS;
 
 export const VideoCard: React.FC<VideoCardProps> = ({ video, isActive }) => {
-  const { user, toggleLike, setIsAuthModalOpen, claimWatchReward } = useApp();
+  const { user, likedVideoIds, bookmarkedVideoIds, toggleLike, setIsAuthModalOpen, claimWatchReward } = useApp();
 
   const [isMuted, setIsMuted] = useState(true);
   const [showCenterIcon, setShowCenterIcon] = useState<CenterIconType | null>(null);
   const [lastTapTime, setLastTapTime] = useState(0);
 
-  const isLiked = user.likedAdIds.includes(video.id);
-  const isBookmarked = user.bookmarkedAdIds.includes(video.id);
+  const isLiked = likedVideoIds.includes(video.id);
+  const isBookmarked = bookmarkedVideoIds.includes(video.id);
   const isWatchedBefore = user.watchedAdIds.includes(video.id);
   const minWatchSeconds = minWatchSecondsFor(video);
   const rewardPoints = DEFAULT_WATCH_REWARD_POINTS;
@@ -66,7 +66,7 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, isActive }) => {
     const now = Date.now();
 
     if (now - lastTapTime < DOUBLE_TAP_DELAY_MS) {
-      if (!isLiked) toggleLike(video.id);
+      if (!isLiked) void toggleLike(video);
       triggerVisualIcon('heart');
     } else if (videoRef.current) {
       if (isPlaying) {

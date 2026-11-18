@@ -61,6 +61,8 @@ PUBLIC = os.environ["R2_BUCKET_PUBLIC"]
 requires_db = pytest.mark.skipif(not TEST_DATABASE_URL, reason="TEST_DATABASE_URL が未設定")
 
 TABLES = [
+    "video_likes",
+    "video_bookmarks",
     "audit_logs",
     "video_reviews",
     "videos",

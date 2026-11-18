@@ -57,6 +57,7 @@ def feed(
             width=r["width"],
             height=r["height"],
             approved_at=r["approved_at"],
+            like_count=r["like_count"],
         )
         for r in rows
     ]

@@ -29,11 +29,27 @@ export interface FeedVideo {
   width: number | null;
   height: number | null;
   approved_at: string;
+  // フィードは CDN で短時間キャッシュされるため、少し遅れることがある
+  like_count: number;
 }
 
 export interface FeedResponse {
   items: FeedVideo[];
   next_cursor: string | null;
+}
+
+export interface LikeResponse {
+  liked: boolean;
+  like_count: number;
+}
+
+export interface BookmarkResponse {
+  bookmarked: boolean;
+}
+
+export interface MyEngagementResponse {
+  liked_video_ids: string[];
+  bookmarked_video_ids: string[];
 }
 
 export interface UploadConfig {

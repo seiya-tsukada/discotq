@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { calcLevel, createHistoryEntry, generateGiftCode, toggleId } from './user';
+import { calcLevel, createHistoryEntry, generateGiftCode, setIdIn } from './user';
 
 describe('calcLevel', () => {
   it('累計ポイントに応じてレベルが上がる', () => {
@@ -14,10 +14,15 @@ describe('calcLevel', () => {
   });
 });
 
-describe('toggleId', () => {
-  it('含まれていなければ追加し、含まれていれば除去する', () => {
-    expect(toggleId(['a'], 'b')).toEqual(['a', 'b']);
-    expect(toggleId(['a', 'b'], 'a')).toEqual(['b']);
+describe('setIdIn', () => {
+  it('on なら先頭に追加し、すでにあれば重複させない', () => {
+    expect(setIdIn(['a'], 'b', true)).toEqual(['b', 'a']);
+    expect(setIdIn(['a', 'b'], 'b', true)).toEqual(['b', 'a']);
+  });
+
+  it('off なら除去し、無ければそのまま', () => {
+    expect(setIdIn(['a', 'b'], 'a', false)).toEqual(['b']);
+    expect(setIdIn(['a'], 'z', false)).toEqual(['a']);
   });
 });
 

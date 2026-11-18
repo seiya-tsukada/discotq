@@ -26,8 +26,6 @@ export interface UserAccount {
   level: UserLevel;
   // 互換性のためキー名は広告時代のまま。中身は動画ID
   watchedAdIds: string[];
-  likedAdIds: string[];
-  bookmarkedAdIds: string[];
   pointHistory: PointHistoryEntry[];
 }
 

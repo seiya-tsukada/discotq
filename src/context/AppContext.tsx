@@ -40,9 +40,12 @@ interface AppContextType {
   isShareModalOpen: boolean;
   setIsShareModalOpen: (open: boolean) => void;
 
-  // User Actions
-  toggleLike: (videoId: string) => void;
-  toggleBookmark: (videoId: string) => void;
+  // いいね・保存（サーバーに保存）とコメント（ログインユーザーのみ）
+  likedVideoIds: string[];
+  bookmarkedVideoIds: string[];
+  likeCountFor: (video: FeedVideo) => number;
+  toggleLike: (video: FeedVideo) => Promise<void>;
+  toggleBookmark: (video: FeedVideo) => Promise<void>;
   addComment: (videoId: string, text: string) => void;
 
   // Reward System
@@ -73,7 +76,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const { notification, showNotification } = useNotification();
   const modals = useModals();
   const feed = useFeedState();
-  const engagement = useEngagement({ user, isLoggedIn, displayName, setUser: setWallet, showNotification });
+  const engagement = useEngagement({
+    user,
+    authUserId: auth.user?.id ?? null,
+    authReady: auth.status === 'ready',
+    displayName,
+    setIsAuthModalOpen: modals.setIsAuthModalOpen,
+    showNotification,
+  });
   const rewards = useRewards({
     user,
     isLoggedIn,
