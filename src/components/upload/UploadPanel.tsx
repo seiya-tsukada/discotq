@@ -124,7 +124,9 @@ export const UploadPanel: React.FC<UploadPanelProps> = ({ mode, resetSignal, onU
               <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
                 MP4 / WebM / MOV
                 <br />
-                最大 {formatBytes(config.max_upload_bytes)} ・ 最長 {formatDuration(config.max_video_duration_sec)}
+                最大 {formatBytes(config.max_upload_bytes)}
+                <br />
+                最長 {formatDuration(config.max_video_duration_sec)}
                 <br />
                 縦型 9:16 推奨
               </p>
