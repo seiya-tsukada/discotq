@@ -28,6 +28,8 @@ logger = logging.getLogger(__name__)
 APPROVABLE = frozenset({"in_review", "rejected", "unpublished"})
 REJECTABLE = frozenset({"in_review", "approved", "unpublished"})
 UNPUBLISHABLE = frozenset({"approved"})
+# アップロードが完了していない（private に原本が揃っていない）ステータス
+UPLOAD_INCOMPLETE = frozenset({"pending_upload", "failed"})
 
 
 def video_key(video_id: UUID, mime_type: str) -> str:
@@ -332,9 +334,14 @@ def unpublish_video(
 def set_pickup(
     conn: Conn, *, video: dict[str, Any], admin_id: UUID, picked_up: bool
 ) -> dict[str, Any]:
-    """運営ピックアップを付け外しする。ステータスは問わない（削除済みのみ不可）。"""
-    if video["status"] == "deleted":
+    """運営ピックアップを付け外しする。
+
+    付けるのは削除済み・アップロード未完了（pending_upload / failed）以外。外すのはいつでもできる。
+    """
+    if picked_up and video["status"] == "deleted":
         raise conflict("invalid_status", "削除済みの動画はピックアップできません")
+    if picked_up and video["status"] in UPLOAD_INCOMPLETE:
+        raise conflict("invalid_status", "アップロードが完了していない動画はピックアップできません")
     if (video["picked_up_at"] is not None) == picked_up:
         return video
     updated = videos_repo.update_video(
@@ -378,6 +385,44 @@ def delete_own_video(
         target_id=str(video["id"]),
         payload={"previous_status": video["status"]},
     )
+
+
+def admin_delete_video(
+    conn: Conn, storage: VideoStorage, *, video: dict[str, Any], admin_id: UUID
+) -> dict[str, Any]:
+    """管理者による削除。ステータスを問わず deleted にし、公開側のコピーを消す。
+
+    アップロードが完了していない動画（pending_upload / failed）は審査・復旧の対象にならないので、
+    private バケットに残った途中のオブジェクトもその場で消す。それ以外は従来どおり原本を残し、
+    30 日後に 04_purge で削除する。
+    """
+    if video["status"] == "deleted":
+        return video
+    _remove_public_copies(storage, video)
+    if video["status"] in UPLOAD_INCOMPLETE:
+        _safe_delete_private(storage, video["object_key"])
+        if video["thumb_key"]:
+            _safe_delete_private(storage, video["thumb_key"])
+    updated = videos_repo.update_video(
+        conn,
+        video["id"],
+        status="deleted",
+        deleted_at=datetime.now(UTC),
+        public_url=None,
+        thumb_url=None,
+        picked_up_at=None,
+        picked_up_by=None,
+    )
+    write_audit_log(
+        conn,
+        actor_type="admin",
+        actor_id=str(admin_id),
+        action="video.admin_delete",
+        target_type="video",
+        target_id=str(video["id"]),
+        payload={"previous_status": video["status"]},
+    )
+    return updated
 
 
 # ---------------------------------------------------------------- helpers
