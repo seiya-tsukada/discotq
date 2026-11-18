@@ -102,7 +102,7 @@ def install_error_handlers(app: FastAPI) -> None:
         if sqlstate in MISSING_SCHEMA_SQLSTATES:
             hint = " hint=discotq スキーマのテーブルがありません。supabase/migration/init.sql を適用してください"
         elif sqlstate == "42501":
-            hint = " hint=権限がありません。DB ユーザーの権限（optional_app_role.sql）を確認してください"
+            hint = " hint=権限がありません。DATABASE_URL の DB ユーザーの権限を確認してください"
         logger.error(
             "db_error sqlstate=%s type=%s error=%s%s %s",
             sqlstate,
