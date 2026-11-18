@@ -29,15 +29,17 @@ def create_video(
     width: int | None,
     height: int | None,
     auto_approve: bool,
+    picked_up_by: UUID | None = None,
 ) -> VideoRow:
     row = conn.execute(
         """
         insert into discotq.videos (
           id, source, uploader_user_id, anonymous_id, uploader_ip_hash, title, description,
           storage_provider, bucket, object_key, thumb_key, mime_type, size_bytes,
-          duration_sec, width, height, auto_approve, status
+          duration_sec, width, height, auto_approve, picked_up_by, picked_up_at, status
         ) values (
-          %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'pending_upload'
+          %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+          case when %s::uuid is null then null else now() end, 'pending_upload'
         )
         returning *
         """,
@@ -59,6 +61,8 @@ def create_video(
             width,
             height,
             auto_approve,
+            picked_up_by,
+            picked_up_by,
         ),
     ).fetchone()
     assert row is not None
@@ -133,24 +137,23 @@ def count_recent_uploads(
 def list_feed(
     conn: Conn, *, limit: int, after: tuple[datetime, UUID] | None
 ) -> list[VideoRow]:
-    if after is None:
-        return conn.execute(
-            """
-            select * from discotq.videos
-            where status = 'approved'
-            order by approved_at desc, id desc
-            limit %s
-            """,
-            (limit,),
-        ).fetchall()
+    """承認済み動画を新しい順に返す。ユーザー投稿は投稿者の表示名も付ける。"""
     return conn.execute(
         """
-        select * from discotq.videos
-        where status = 'approved' and (approved_at, id) < (%s, %s)
-        order by approved_at desc, id desc
-        limit %s
+        select v.*,
+               case when v.source = 'user' then u.display_name end as uploader_name
+        from discotq.videos v
+        left join discotq.users u on u.id = v.uploader_user_id
+        where v.status = 'approved'
+          and (%(after_at)s::timestamptz is null or (v.approved_at, v.id) < (%(after_at)s, %(after_id)s))
+        order by v.approved_at desc, v.id desc
+        limit %(limit)s
         """,
-        (after[0], after[1], limit),
+        {
+            "after_at": after[0] if after else None,
+            "after_id": after[1] if after else None,
+            "limit": limit,
+        },
     ).fetchall()
 
 

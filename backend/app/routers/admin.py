@@ -15,6 +15,7 @@ from backend.app.schemas.videos import (
     AdminVideo,
     AdminVideoDetail,
     AdminVideosResponse,
+    PickupRequest,
     PreviewUrlResponse,
     RejectRequest,
     UploadIntentResponse,
@@ -54,6 +55,8 @@ def to_admin_video(r: dict[str, Any]) -> AdminVideo:
         approved_by_email=r.get("approved_by_email"),
         approved_at=r["approved_at"],
         auto_approve=r["auto_approve"],
+        is_pickup=r["picked_up_at"] is not None,
+        picked_up_at=r["picked_up_at"],
         created_at=r["created_at"],
         updated_at=r["updated_at"],
     )
@@ -161,6 +164,16 @@ def unpublish(
     return to_admin_video(video)
 
 
+@router.post("/videos/{video_id}/pickup", response_model=AdminVideo)
+def pickup(video_id: UUID, req: PickupRequest, conn: ConnDep, admin: AdminDep) -> AdminVideo:
+    """運営ピックアップを付け外しする。フィードの表示にだけ影響し、公開状態は変えない。"""
+    video_service.set_pickup(conn, video=_load(conn, video_id), admin_id=admin.id, picked_up=req.picked_up)
+    # 一覧と同じ形（投稿者・承認者のメール付き）で返す
+    row = videos_repo.get_admin_video(conn, video_id)
+    assert row is not None
+    return to_admin_video(row)
+
+
 @router.post("/uploads/intent", response_model=UploadIntentResponse, status_code=201)
 def admin_upload_intent(
     req: AdminUploadIntentRequest,
@@ -180,4 +193,5 @@ def admin_upload_intent(
         source="platform",
         principal=principal,
         auto_approve=req.auto_approve,
+        pickup=req.pickup,
     )

@@ -25,6 +25,7 @@ export interface UploadInput {
   title: string;
   description: string;
   autoApprove?: boolean;
+  pickup?: boolean;
 }
 
 let cachedConfig: Promise<UploadConfig> | null = null;
@@ -119,7 +120,7 @@ export const useVideoUpload = (mode: 'user' | 'admin') => {
   );
 
   const upload = useCallback(
-    async ({ title, description, autoApprove }: UploadInput) => {
+    async ({ title, description, autoApprove, pickup }: UploadInput) => {
       if (!selected) return;
       const controller = new AbortController();
       abortRef.current = controller;
@@ -140,7 +141,7 @@ export const useVideoUpload = (mode: 'user' | 'admin') => {
         };
         const intent =
           mode === 'admin'
-            ? await adminApi.createIntent({ ...body, auto_approve: !!autoApprove })
+            ? await adminApi.createIntent({ ...body, auto_approve: !!autoApprove, pickup: !!pickup })
             : await videoApi.createIntent(body);
 
         const thumbBytes = intent.thumbnail_upload && selected.thumbnail ? selected.thumbnail.size : 0;

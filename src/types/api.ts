@@ -17,6 +17,9 @@ export interface AuthUser {
 export interface FeedVideo {
   id: string;
   source: VideoSource;
+  is_pickup: boolean;
+  /** ユーザー投稿の投稿者の表示名（未設定・匿名・運営投稿は null） */
+  uploader_name: string | null;
   title: string;
   description: string;
   video_url: string;
@@ -58,6 +61,7 @@ export interface UploadIntentRequest {
   description: string;
   thumbnail?: { size_bytes: number } | null;
   auto_approve?: boolean;
+  pickup?: boolean;
 }
 
 export interface UploadIntentResponse {
@@ -113,6 +117,8 @@ export interface AdminVideo {
   approved_by_email: string | null;
   approved_at: string | null;
   auto_approve: boolean;
+  is_pickup: boolean;
+  picked_up_at: string | null;
   created_at: string;
   updated_at: string;
 }
