@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { CheckCircle2, FileVideo, Loader2, RotateCcw, UploadCloud, X } from 'lucide-react';
 import { formatBytes, formatDuration, STATUS_LABELS } from '../../lib/videoFile';
 import type { MyVideo } from '../../types/api';
@@ -6,15 +6,15 @@ import { useVideoUpload } from './useVideoUpload';
 
 interface UploadPanelProps {
   mode: 'user' | 'admin';
-  /** admin のみ: 右カラムの先頭に表示する説明文 */
-  intro?: React.ReactNode;
+  /** 値が変わると、完了画面を閉じて入力画面に戻す（アップロード中は何もしない） */
+  resetSignal?: number;
   onUploaded?: (video: MyVideo) => void;
 }
 
 const inputClass =
   'w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 disabled:cursor-not-allowed';
 
-export const UploadPanel: React.FC<UploadPanelProps> = ({ mode, intro, onUploaded }) => {
+export const UploadPanel: React.FC<UploadPanelProps> = ({ mode, resetSignal, onUploaded }) => {
   const { config, phase, selected, progress, error, warning, result, selectFile, upload, cancel, reset } =
     useVideoUpload(mode);
   const [title, setTitle] = useState('');
@@ -47,6 +47,12 @@ export const UploadPanel: React.FC<UploadPanelProps> = ({ mode, intro, onUploade
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  useEffect(() => {
+    if (resetSignal !== undefined && phase === 'done') startOver();
+    // resetSignal の変化だけを契機にする
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resetSignal]);
+
   if (phase === 'done' && result) {
     return (
       <div className="p-5 rounded-xl bg-slate-900 border border-emerald-500/30 flex flex-col items-center gap-3 text-center">
@@ -70,7 +76,7 @@ export const UploadPanel: React.FC<UploadPanelProps> = ({ mode, intro, onUploade
 
   // ---------------------------------------------------------------- 部品
 
-  // admin は縦長（9:16）の枠にし、要件は右カラムのタグで見せる
+  // admin は縦長（9:16）の枠にし、要件も枠内に表示する
   const dropZone = (
     <div
       onDragOver={(e) => {
@@ -113,12 +119,23 @@ export const UploadPanel: React.FC<UploadPanelProps> = ({ mode, intro, onUploade
           <p className="text-xs text-slate-400">
             {isAdmin ? 'またはクリックして選択' : 'またはクリックしてファイルを選択'}
           </p>
-          {config && !isAdmin && (
-            <p className="text-[11px] text-slate-500">
-              MP4 / WebM / MOV ・ 最大 {formatBytes(config.max_upload_bytes)} ・ 最長{' '}
-              {formatDuration(config.max_video_duration_sec)}（縦型 9:16 推奨）
-            </p>
-          )}
+          {config &&
+            (isAdmin ? (
+              <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+                MP4 / WebM / MOV
+                <br />
+                最大 {formatBytes(config.max_upload_bytes)}
+                <br />
+                最長 {formatDuration(config.max_video_duration_sec)}
+                <br />
+                縦型 9:16 推奨
+              </p>
+            ) : (
+              <p className="text-[11px] text-slate-500">
+                MP4 / WebM / MOV ・ 最大 {formatBytes(config.max_upload_bytes)} ・ 最長{' '}
+                {formatDuration(config.max_video_duration_sec)}（縦型 9:16 推奨）
+              </p>
+            ))}
         </>
       )}
       <input
@@ -183,7 +200,7 @@ export const UploadPanel: React.FC<UploadPanelProps> = ({ mode, intro, onUploade
   const fields = (
     <>
       <label className="flex flex-col gap-1 text-xs text-slate-400">
-        タイトル
+        タイトル（任意）
         <input
           className={inputClass}
           value={title}
@@ -193,10 +210,10 @@ export const UploadPanel: React.FC<UploadPanelProps> = ({ mode, intro, onUploade
           placeholder="例: 新商品を使ってみた"
         />
       </label>
-      <label className="flex flex-col gap-1 text-xs text-slate-400">
+      <label className={`flex flex-col gap-1 text-xs text-slate-400 ${isAdmin ? 'flex-1' : ''}`}>
         説明（任意）
         <textarea
-          className={`${inputClass} min-h-[72px]`}
+          className={`${inputClass} min-h-[72px] ${isAdmin ? 'flex-1 resize-none' : ''}`}
           value={description}
           maxLength={2000}
           onChange={(e) => setDescription(e.target.value)}
@@ -274,7 +291,7 @@ export const UploadPanel: React.FC<UploadPanelProps> = ({ mode, intro, onUploade
     </div>
   );
 
-  // ---------------------------------------------------------------- admin: 左に動画、右に説明と入力欄
+  // ---------------------------------------------------------------- admin: 左に動画（条件はドロップ枠内）、右に入力欄
 
   if (isAdmin) {
     return (
@@ -290,23 +307,8 @@ export const UploadPanel: React.FC<UploadPanelProps> = ({ mode, intro, onUploade
           )}
         </div>
         <div className="flex-1 min-w-0 flex flex-col gap-3">
-          {intro && <div className="text-xs text-slate-400 leading-relaxed">{intro}</div>}
-          {config && (
-            <ul className="flex flex-wrap gap-1.5" aria-label="アップロードできる動画の条件">
-              {[
-                'MP4 / WebM / MOV',
-                `最大 ${formatBytes(config.max_upload_bytes)}`,
-                `最長 ${formatDuration(config.max_video_duration_sec)}`,
-                '縦型 9:16 推奨',
-              ].map((label) => (
-                <li key={label} className="text-[11px] text-slate-400 border border-slate-700 rounded-full px-2 py-0.5">
-                  {label}
-                </li>
-              ))}
-            </ul>
-          )}
           {fileInfo}
-          <div className={`flex flex-col gap-3 transition-opacity ${selected ? '' : 'opacity-50'}`}>
+          <div className={`flex-1 flex flex-col gap-3 transition-opacity ${selected ? '' : 'opacity-50'}`}>
             {fields}
             {status}
             {actions}
