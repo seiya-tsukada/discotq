@@ -200,7 +200,7 @@ export const UploadPanel: React.FC<UploadPanelProps> = ({ mode, resetSignal, onU
   const fields = (
     <>
       <label className="flex flex-col gap-1 text-xs text-slate-400">
-        タイトル
+        タイトル（任意）
         <input
           className={inputClass}
           value={title}
