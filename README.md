@@ -29,7 +29,7 @@ backend/app/
 backend/tests/               # pytest（実 Postgres + moto）
 scripts/                     # create_admin.py / setup_r2_cors.py
 seed/                        # seed 動画の管理（マニフェスト・CLI。seed/README.md）
-supabase/migration/          # init.sql（スキーマ）, optional_app_role.sql（API 専用ロール）
+supabase/migration/          # init.sql（スキーマ）
 supabase/maintenance/        # 運用 SQL（01〜06）
 src/                         # フロントエンド（Vite + React + TypeScript）
 ├── pages/user, pages/admin, pages/auth
@@ -119,10 +119,9 @@ bun run test   # Vitest
 
 ### 2. Supabase（Postgres）
 
-1. SQL Editor で `supabase/migration/init.sql` を実行（何度実行しても壊れません）
-2. （推奨）`supabase/migration/optional_app_role.sql` のパスワードを書き換えて実行し、`discotq` スキーマにしか触れない API 専用ロール `discotq_app` を作る
-3. `DATABASE_URL` には **transaction pooler（ポート 6543）** の接続文字列を使う（Project Settings > Database > Connection string > Transaction pooler）。専用ロールの場合、ユーザー名は `discotq_app.<project-ref>`
-4. 最初の管理者を作成
+1. SQL Editor で `supabase/migration/init.sql` を実行（何度実行しても壊れません。テーブルを追加したときもこれを流し直します）
+2. `DATABASE_URL` には **transaction pooler（ポート 6543）** の接続文字列を使う（Project Settings > Database > Connection string > Transaction pooler）。ユーザーは `postgres.<project-ref>`
+3. 最初の管理者を作成
 
    `create_admin.py` は Vercel 用の `DATABASE_URL`（6543）を使いません。**ポート 5432**（Connect > Session pooler、または IPv6 が使える環境なら Direct connection）に接続し、DB のパスワードは psql と同じく実行時に入力します（画面に表示されず、シェルの履歴にも残りません）。
 
