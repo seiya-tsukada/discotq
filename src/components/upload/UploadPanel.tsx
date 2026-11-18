@@ -76,7 +76,7 @@ export const UploadPanel: React.FC<UploadPanelProps> = ({ mode, resetSignal, onU
 
   // ---------------------------------------------------------------- 部品
 
-  // admin は縦長（9:16）の枠にし、要件も枠内に表示する
+  // admin は縦長（9:16）の枠にする
   const dropZone = (
     <div
       onDragOver={(e) => {
@@ -119,23 +119,6 @@ export const UploadPanel: React.FC<UploadPanelProps> = ({ mode, resetSignal, onU
           <p className="text-xs text-slate-400">
             {isAdmin ? 'またはクリックして選択' : 'またはクリックしてファイルを選択'}
           </p>
-          {config &&
-            (isAdmin ? (
-              <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
-                MP4 / WebM / MOV
-                <br />
-                最大 {formatBytes(config.max_upload_bytes)}
-                <br />
-                最長 {formatDuration(config.max_video_duration_sec)}
-                <br />
-                縦型 9:16 推奨
-              </p>
-            ) : (
-              <p className="text-[11px] text-slate-500">
-                MP4 / WebM / MOV ・ 最大 {formatBytes(config.max_upload_bytes)} ・ 最長{' '}
-                {formatDuration(config.max_video_duration_sec)}（縦型 9:16 推奨）
-              </p>
-            ))}
         </>
       )}
       <input
