@@ -189,6 +189,39 @@ create table if not exists discotq.video_reviews (
 create index if not exists video_reviews_video_idx on discotq.video_reviews (video_id, created_at);
 
 -- -----------------------------------------------------------------------------
+-- video_likes / video_bookmarks: いいね・保存
+-- ログインユーザーは user_id、未ログインは anonymous_id（X-Anonymous-Id）で記録し、
+-- どちらか一方だけを持つ。ログイン時に匿名分をアカウントへ引き継ぐことはしない。
+-- -----------------------------------------------------------------------------
+create table if not exists discotq.video_likes (
+  id           bigint generated always as identity primary key,
+  video_id     uuid not null references discotq.videos (id) on delete cascade,
+  user_id      uuid references discotq.users (id) on delete cascade,
+  anonymous_id uuid,
+  created_at   timestamptz not null default now(),
+  constraint video_likes_owner_chk check ((user_id is null) <> (anonymous_id is null))
+);
+create unique index if not exists video_likes_user_uq
+  on discotq.video_likes (user_id, video_id) where user_id is not null;
+create unique index if not exists video_likes_anonymous_uq
+  on discotq.video_likes (anonymous_id, video_id) where anonymous_id is not null;
+-- 動画ごとのいいね数
+create index if not exists video_likes_video_idx on discotq.video_likes (video_id);
+
+create table if not exists discotq.video_bookmarks (
+  id           bigint generated always as identity primary key,
+  video_id     uuid not null references discotq.videos (id) on delete cascade,
+  user_id      uuid references discotq.users (id) on delete cascade,
+  anonymous_id uuid,
+  created_at   timestamptz not null default now(),
+  constraint video_bookmarks_owner_chk check ((user_id is null) <> (anonymous_id is null))
+);
+create unique index if not exists video_bookmarks_user_uq
+  on discotq.video_bookmarks (user_id, video_id) where user_id is not null;
+create unique index if not exists video_bookmarks_anonymous_uq
+  on discotq.video_bookmarks (anonymous_id, video_id) where anonymous_id is not null;
+
+-- -----------------------------------------------------------------------------
 -- audit_logs: 監査ログ（審査操作・削除・紐づけなど）
 -- actor_id は匿名IDも入るため text で持つ
 -- -----------------------------------------------------------------------------
@@ -225,6 +258,8 @@ alter table discotq.login_attempts enable row level security;
 alter table discotq.admins         enable row level security;
 alter table discotq.videos         enable row level security;
 alter table discotq.video_reviews  enable row level security;
+alter table discotq.video_likes     enable row level security;
+alter table discotq.video_bookmarks enable row level security;
 alter table discotq.audit_logs     enable row level security;
 
 revoke all on schema discotq from public;

@@ -2,6 +2,7 @@ import React from 'react';
 import { Heart, MessageSquare, Bookmark, Share2 } from 'lucide-react';
 import type { FeedVideo } from '../../types/api';
 import { useApp } from '../../context/AppContext';
+import { formatCount } from '../../lib/format';
 
 interface ActionRailProps {
   video: FeedVideo;
@@ -14,7 +15,7 @@ const baseButton =
 
 // 右側: いいね・コメント・保存・共有
 export const ActionRail: React.FC<ActionRailProps> = ({ video, isLiked, isBookmarked }) => {
-  const { toggleLike, toggleBookmark, comments, setIsCommentsModalOpen, setIsShareModalOpen } = useApp();
+  const { toggleLike, toggleBookmark, likeCountFor, comments, setIsCommentsModalOpen, setIsShareModalOpen } = useApp();
   const commentCount = comments[video.id]?.length ?? 0;
 
   return (
@@ -24,7 +25,7 @@ export const ActionRail: React.FC<ActionRailProps> = ({ video, isLiked, isBookma
     >
       <div className="flex flex-col items-center">
         <button
-          onClick={() => toggleLike(video.id)}
+          onClick={() => void toggleLike(video)}
           className={
             isLiked
               ? 'w-9 h-9 rounded-lg flex items-center justify-center transition-all bg-rose-500/15 text-rose-400 border border-rose-500/30'
@@ -34,7 +35,7 @@ export const ActionRail: React.FC<ActionRailProps> = ({ video, isLiked, isBookma
         >
           <Heart className={`w-4 h-4 ${isLiked ? 'fill-rose-500 text-rose-500' : ''}`} />
         </button>
-        <span className="text-[10px] font-medium text-slate-300 mt-1">いいね</span>
+        <span className="text-[10px] font-medium text-slate-300 mt-1">{formatCount(likeCountFor(video))}</span>
       </div>
 
       <div className="flex flex-col items-center">
@@ -46,7 +47,7 @@ export const ActionRail: React.FC<ActionRailProps> = ({ video, isLiked, isBookma
 
       <div className="flex flex-col items-center">
         <button
-          onClick={() => toggleBookmark(video.id)}
+          onClick={() => void toggleBookmark(video)}
           className={
             isBookmarked
               ? 'w-9 h-9 rounded-lg flex items-center justify-center transition-all bg-blue-500/15 text-blue-400 border border-blue-500/30'

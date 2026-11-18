@@ -34,7 +34,8 @@ declare
 begin
   foreach t in array array[
     'users', 'sessions', 'email_tokens', 'login_attempts',
-    'admins', 'videos', 'video_reviews', 'audit_logs'
+    'admins', 'videos', 'video_reviews', 'audit_logs',
+    'video_likes', 'video_bookmarks'
   ] loop
     execute format('drop policy if exists discotq_app_all on discotq.%I', t);
     execute format(

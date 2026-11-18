@@ -80,6 +80,8 @@ class FeedItem(BaseModel):
     width: int | None
     height: int | None
     approved_at: datetime
+    # フィードは CDN で短時間キャッシュするため、数秒〜数十秒遅れることがある
+    like_count: int
 
 
 class FeedResponse(BaseModel):

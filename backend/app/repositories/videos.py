@@ -136,18 +136,20 @@ def list_feed(
     if after is None:
         return conn.execute(
             """
-            select * from discotq.videos
-            where status = 'approved'
-            order by approved_at desc, id desc
+            select v.*, (select count(*) from discotq.video_likes l where l.video_id = v.id) as like_count
+            from discotq.videos v
+            where v.status = 'approved'
+            order by v.approved_at desc, v.id desc
             limit %s
             """,
             (limit,),
         ).fetchall()
     return conn.execute(
         """
-        select * from discotq.videos
-        where status = 'approved' and (approved_at, id) < (%s, %s)
-        order by approved_at desc, id desc
+        select v.*, (select count(*) from discotq.video_likes l where l.video_id = v.id) as like_count
+        from discotq.videos v
+        where v.status = 'approved' and (v.approved_at, v.id) < (%s, %s)
+        order by v.approved_at desc, v.id desc
         limit %s
         """,
         (after[0], after[1], limit),
