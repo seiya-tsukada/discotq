@@ -1,33 +1,15 @@
 from __future__ import annotations
 
-import base64
-import binascii
-from datetime import datetime
 from typing import Annotated
-from uuid import UUID
 
 from fastapi import APIRouter, Query, Response
 
 from backend.app.auth import ConnDep
-from backend.app.errors import bad_request
+from backend.app.pagination import decode_cursor, encode_cursor
 from backend.app.repositories import videos as videos_repo
 from backend.app.schemas.videos import FeedItem, FeedResponse
 
 router = APIRouter(tags=["public"])
-
-
-def encode_cursor(approved_at: datetime, video_id: UUID) -> str:
-    raw = f"{approved_at.isoformat()}|{video_id}".encode()
-    return base64.urlsafe_b64encode(raw).decode().rstrip("=")
-
-
-def decode_cursor(cursor: str) -> tuple[datetime, UUID]:
-    try:
-        padded = cursor + "=" * (-len(cursor) % 4)
-        ts, vid = base64.urlsafe_b64decode(padded).decode().split("|", 1)
-        return datetime.fromisoformat(ts), UUID(vid)
-    except (ValueError, binascii.Error, UnicodeDecodeError) as e:
-        raise bad_request("invalid_cursor", "cursor が不正です") from e
 
 
 @router.get("/videos/feed", response_model=FeedResponse)
@@ -58,6 +40,7 @@ def feed(
             height=r["height"],
             approved_at=r["approved_at"],
             like_count=r["like_count"],
+            comment_count=r["comment_count"],
         )
         for r in rows
     ]

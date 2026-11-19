@@ -2,16 +2,6 @@ export type UserLevel = 'ブロンズ' | 'シルバー' | 'ゴールド' | 'VIP'
 
 export type NotificationType = 'success' | 'info' | 'warning';
 
-export interface UserComment {
-  id: string;
-  videoId: string;
-  userName: string;
-  userAvatar: string;
-  comment: string;
-  likes: number;
-  timeAgo: string;
-}
-
 // 端末に保存する視聴者のリワード状態。isLoggedIn は「ウォレット開設済み」の印として使い、
 // 実際のログイン状態は AuthContext（サーバーのセッション）を正とする
 export interface UserAccount {

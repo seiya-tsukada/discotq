@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
-import { GiftItem, UserAccount, UserComment } from '../types';
+import { GiftItem, UserAccount } from '../types';
 import type { FeedVideo } from '../types/api';
 import { GIFT_ITEMS } from '../data/gifts';
 import { LOCAL_STORAGE_KEY_USER } from '../constants/storage';
@@ -27,7 +27,6 @@ interface AppContextType {
 
   // 視聴者（isLoggedIn / name / email はサーバーのログイン状態を反映）
   user: UserAccount;
-  comments: Record<string, UserComment[]>;
   giftItems: GiftItem[];
 
   // Modals
@@ -40,13 +39,14 @@ interface AppContextType {
   isShareModalOpen: boolean;
   setIsShareModalOpen: (open: boolean) => void;
 
-  // いいね・保存（サーバーに保存）とコメント（ログインユーザーのみ）
+  // いいね・保存（サーバーに保存）とコメント数の表示
   likedVideoIds: string[];
   bookmarkedVideoIds: string[];
   likeCountFor: (video: FeedVideo) => number;
   toggleLike: (video: FeedVideo) => Promise<void>;
   toggleBookmark: (video: FeedVideo) => Promise<void>;
-  addComment: (videoId: string, text: string) => void;
+  commentCountFor: (video: FeedVideo) => number;
+  setCommentCount: (videoId: string, count: number) => void;
 
   // Reward System
   claimWatchReward: (videoId: string, title: string) => RewardResult;
@@ -77,11 +77,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const modals = useModals();
   const feed = useFeedState();
   const engagement = useEngagement({
-    user,
     authUserId: auth.user?.id ?? null,
     authReady: auth.status === 'ready',
-    displayName,
-    setIsAuthModalOpen: modals.setIsAuthModalOpen,
     showNotification,
   });
   const rewards = useRewards({

@@ -79,16 +79,14 @@ describe('request のエラーID', () => {
   it('API のエラー応答の request_id をメッセージに含める', async () => {
     vi.stubGlobal(
       'fetch',
-      vi
-        .fn()
-        .mockResolvedValue(
-          new Response(
-            JSON.stringify({
-              error: { code: 'db_unavailable', message: 'DBに接続できません', request_id: 'hnd1::abc' },
-            }),
-            { status: 503 }
-          )
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            error: { code: 'db_unavailable', message: 'DBに接続できません', request_id: 'hnd1::abc' },
+          }),
+          { status: 503 }
         )
+      )
     );
     const err = (await request('GET', '/videos/feed').catch((e: unknown) => e)) as ApiError;
     expect(err.code).toBe('db_unavailable');

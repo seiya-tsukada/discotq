@@ -10,7 +10,14 @@
 --   * 認証は Supabase Auth を使わず discotq.users / discotq.sessions で独自に持つ
 --   * 全テーブルで RLS を有効化し、anon / authenticated には一切権限を付与しない。
 --     アクセスはバックエンド (FastAPI) の DB 接続ユーザー経由のみ。
---   * 何度流しても壊れないよう、可能な限り if not exists で書く
+--   * 何度流しても壊れず、既存 DB に流し直せば最新の形に揃うように書く（冪等）
+--       - テーブル・インデックス: create ... if not exists
+--       - 既存テーブルへの列追加: alter table ... add column if not exists
+--       - 制約: pg_constraint に同名が無いときだけ add constraint（do ブロック）
+--       - 関数: create or replace / トリガー: drop if exists → create
+--     create table if not exists は既存テーブルに新しい列・制約を足さないため、
+--     公開後のテーブルを変えるときは create table を書き換えず、上の方法で後ろに足すこと
+--     （backend/tests/test_init_sql.py で 2 回流しても通ることを確認している）
 -- =============================================================================
 
 begin;
@@ -226,6 +233,41 @@ create unique index if not exists video_bookmarks_anonymous_uq
   on discotq.video_bookmarks (anonymous_id, video_id) where anonymous_id is not null;
 
 -- -----------------------------------------------------------------------------
+-- video_comments: 動画へのコメント（ログインユーザーのみ投稿できる）
+-- 削除は deleted_at を入れる論理削除。通報対応・荒らし調査のため本文は残し、一覧からだけ外す。
+-- deleted_by は削除した人（本人または管理者）。
+-- -----------------------------------------------------------------------------
+create table if not exists discotq.video_comments (
+  id         uuid primary key default gen_random_uuid(),
+  video_id   uuid not null references discotq.videos (id) on delete cascade,
+  user_id    uuid not null references discotq.users (id) on delete cascade,
+  body       text not null,
+  created_at timestamptz not null default now(),
+  deleted_at timestamptz,
+  deleted_by uuid references discotq.users (id) on delete set null
+);
+-- 制約は名前で有無を確かめて足す（テーブルが先に別の形で作られていても、流し直せば揃う）
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'video_comments_body_len'
+                 and conrelid = 'discotq.video_comments'::regclass) then
+    alter table discotq.video_comments
+      add constraint video_comments_body_len check (char_length(body) between 1 and 500);
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'video_comments_deleted_chk'
+                 and conrelid = 'discotq.video_comments'::regclass) then
+    alter table discotq.video_comments
+      add constraint video_comments_deleted_chk check (deleted_by is null or deleted_at is not null);
+  end if;
+end;
+$$;
+-- 動画ごとの一覧（新しい順 + カーソル）と件数。削除済みは含めない
+create index if not exists video_comments_video_idx
+  on discotq.video_comments (video_id, created_at desc, id desc) where deleted_at is null;
+-- 投稿間隔のレート制限・ユーザーごとの調査
+create index if not exists video_comments_user_idx on discotq.video_comments (user_id, created_at desc);
+
+-- -----------------------------------------------------------------------------
 -- audit_logs: 監査ログ（審査操作・削除・紐づけなど）
 -- actor_id は匿名IDも入るため text で持つ
 -- -----------------------------------------------------------------------------
@@ -264,6 +306,7 @@ alter table discotq.videos         enable row level security;
 alter table discotq.video_reviews  enable row level security;
 alter table discotq.video_likes     enable row level security;
 alter table discotq.video_bookmarks enable row level security;
+alter table discotq.video_comments  enable row level security;
 alter table discotq.audit_logs     enable row level security;
 
 revoke all on schema discotq from public;

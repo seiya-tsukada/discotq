@@ -87,6 +87,8 @@ class FeedItem(BaseModel):
     approved_at: datetime
     # フィードは CDN で短時間キャッシュするため、数秒〜数十秒遅れることがある
     like_count: int
+    # 削除済みを除いたコメント数（like_count と同じく少し遅れることがある）
+    comment_count: int
 
 
 class FeedResponse(BaseModel):
