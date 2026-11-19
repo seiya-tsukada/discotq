@@ -286,12 +286,131 @@ create index if not exists audit_logs_target_idx on discotq.audit_logs (target_t
 create index if not exists audit_logs_created_idx on discotq.audit_logs (created_at desc);
 
 -- -----------------------------------------------------------------------------
+-- view_sessions: 視聴の開始記録。受取時に「サーバーの時計で最低秒数が経ったか」を確かめる
+-- ログインユーザーは user_id、未ログインは anonymous_id のどちらか一方を持つ。
+-- min_watch_seconds は開始時点の必要秒数（動画が短ければ動画の長さ）。
+-- -----------------------------------------------------------------------------
+create table if not exists discotq.view_sessions (
+  id                uuid primary key default gen_random_uuid(),
+  video_id          uuid not null references discotq.videos (id) on delete cascade,
+  user_id           uuid references discotq.users (id) on delete cascade,
+  anonymous_id      uuid,
+  min_watch_seconds integer not null,
+  ip_hash           text,
+  user_agent        text,
+  started_at        timestamptz not null default now(),
+  claimed_at        timestamptz
+);
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'view_sessions_owner_chk'
+                 and conrelid = 'discotq.view_sessions'::regclass) then
+    alter table discotq.view_sessions
+      add constraint view_sessions_owner_chk check ((user_id is null) <> (anonymous_id is null));
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'view_sessions_min_watch_chk'
+                 and conrelid = 'discotq.view_sessions'::regclass) then
+    alter table discotq.view_sessions
+      add constraint view_sessions_min_watch_chk check (min_watch_seconds >= 1);
+  end if;
+end;
+$$;
+-- レート制限（本人ごと・IP ごとの直近件数）
+create index if not exists view_sessions_user_idx on discotq.view_sessions (user_id, started_at desc);
+create index if not exists view_sessions_anonymous_idx on discotq.view_sessions (anonymous_id, started_at desc);
+create index if not exists view_sessions_ip_idx on discotq.view_sessions (ip_hash, started_at desc);
+
+-- -----------------------------------------------------------------------------
+-- point_ledger: ポイントの増減を追記専用で記録する（残高は sum(points) で求める。更新・削除しない）
+--   watch              : 視聴リワード（+）。ユーザー×動画、匿名ID×動画でそれぞれ 1 回だけ
+--   welcome            : ウェルカムボーナス（+）。ユーザーごとに 1 回だけ
+--   guest_transfer_out : ログイン時にユーザーへ引き継いだ匿名側の分（-）。匿名側の残高を 0 にする
+--                        引き継ぐのは前回の引き継ぎより後の watch 行で、ユーザー側の watch 行
+--                        （transferred_from_anonymous_id 付き）として写す。前後関係が崩れないよう、
+--                        匿名側の行は本人ごとのロックの中で created_at = clock_timestamp() で入れる
+--   exchange           : ギフト交換（-）。idempotency_key で再送による二重引き落としを防ぐ
+--   adjustment         : 運営による手動調整（±）
+-- -----------------------------------------------------------------------------
+create table if not exists discotq.point_ledger (
+  id                            uuid primary key default gen_random_uuid(),
+  user_id                       uuid references discotq.users (id) on delete cascade,
+  anonymous_id                  uuid,
+  kind                          text not null,
+  points                        integer not null,
+  title                         text not null default '',
+  video_id                      uuid references discotq.videos (id) on delete set null,
+  view_session_id               uuid references discotq.view_sessions (id) on delete set null,
+  transferred_from_anonymous_id uuid,
+  gift_id                       text,
+  gift_code                     text,
+  idempotency_key               uuid,
+  created_at                    timestamptz not null default now()
+);
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'point_ledger_owner_chk'
+                 and conrelid = 'discotq.point_ledger'::regclass) then
+    alter table discotq.point_ledger
+      add constraint point_ledger_owner_chk check ((user_id is null) <> (anonymous_id is null));
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'point_ledger_kind_chk'
+                 and conrelid = 'discotq.point_ledger'::regclass) then
+    alter table discotq.point_ledger
+      add constraint point_ledger_kind_chk check (kind in (
+        'watch', 'welcome', 'guest_transfer_out', 'exchange', 'adjustment'
+      ));
+  end if;
+  -- 種類ごとの符号。adjustment だけは ± どちらも取れる（0 は不可）
+  if not exists (select 1 from pg_constraint where conname = 'point_ledger_sign_chk'
+                 and conrelid = 'discotq.point_ledger'::regclass) then
+    alter table discotq.point_ledger
+      add constraint point_ledger_sign_chk check (
+        points <> 0
+        and (kind not in ('watch', 'welcome') or points > 0)
+        and (kind not in ('guest_transfer_out', 'exchange') or points < 0)
+      );
+  end if;
+  -- 匿名 ID が持てるのは視聴と引き継ぎだけ（交換・ボーナスはログインユーザーのみ）
+  if not exists (select 1 from pg_constraint where conname = 'point_ledger_anonymous_kind_chk'
+                 and conrelid = 'discotq.point_ledger'::regclass) then
+    alter table discotq.point_ledger
+      add constraint point_ledger_anonymous_kind_chk check (
+        anonymous_id is null or kind in ('watch', 'guest_transfer_out')
+      );
+  end if;
+  -- watch の video_id は付与時には必ず入るが、動画が物理削除（purge）されると null になる。
+  -- 残高を変えないため、台帳の行は消さずに残す
+  if not exists (select 1 from pg_constraint where conname = 'point_ledger_exchange_chk'
+                 and conrelid = 'discotq.point_ledger'::regclass) then
+    alter table discotq.point_ledger
+      add constraint point_ledger_exchange_chk check (
+        kind <> 'exchange' or (gift_id is not null and gift_code is not null and idempotency_key is not null)
+      );
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'point_ledger_title_len'
+                 and conrelid = 'discotq.point_ledger'::regclass) then
+    alter table discotq.point_ledger
+      add constraint point_ledger_title_len check (char_length(title) <= 200);
+  end if;
+end;
+$$;
+-- 二重付与の防止
+create unique index if not exists point_ledger_user_watch_uq
+  on discotq.point_ledger (user_id, video_id) where kind = 'watch' and user_id is not null;
+create unique index if not exists point_ledger_anonymous_watch_uq
+  on discotq.point_ledger (anonymous_id, video_id) where kind = 'watch' and anonymous_id is not null;
+create unique index if not exists point_ledger_welcome_uq
+  on discotq.point_ledger (user_id) where kind = 'welcome';
+create unique index if not exists point_ledger_exchange_idempotency_uq
+  on discotq.point_ledger (user_id, idempotency_key) where kind = 'exchange';
+-- 残高・履歴（新しい順 + カーソル）・レート制限
+create index if not exists point_ledger_user_idx on discotq.point_ledger (user_id, created_at desc, id desc);
+create index if not exists point_ledger_anonymous_idx on discotq.point_ledger (anonymous_id, created_at desc, id desc);
+
+-- -----------------------------------------------------------------------------
 -- TODO(広告機能): 今回は作らない。構想メモ
---   * discotq.campaigns     : 広告主・予算・配信期間・対象動画(video_id)・単価
---   * discotq.view_sessions : 視聴ごとの記録（video_id, user_id/anonymous_id, 視聴秒数, 完了フラグ）
---                             不正視聴対策のため IP ハッシュ・UA も保持
---   * discotq.point_ledger  : ポイントの増減を追記専用で記録（残高は集計で求める）
---                             view_sessions / campaigns への参照を持ち、二重付与を一意制約で防ぐ
+--   * discotq.campaigns : 広告主・予算・配信期間・対象動画(video_id)・単価
+--                         作るときは point_ledger に campaign_id を足し、キャンペーン単位で付与を管理する
 -- -----------------------------------------------------------------------------
 
 -- -----------------------------------------------------------------------------
@@ -308,6 +427,8 @@ alter table discotq.video_likes     enable row level security;
 alter table discotq.video_bookmarks enable row level security;
 alter table discotq.video_comments  enable row level security;
 alter table discotq.audit_logs     enable row level security;
+alter table discotq.view_sessions  enable row level security;
+alter table discotq.point_ledger   enable row level security;
 
 revoke all on schema discotq from public;
 revoke all on all tables in schema discotq from public;

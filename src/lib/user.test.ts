@@ -1,18 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { calcLevel, createHistoryEntry, generateGiftCode, setIdIn } from './user';
-
-describe('calcLevel', () => {
-  it('累計ポイントに応じてレベルが上がる', () => {
-    expect(calcLevel(299, 'ブロンズ')).toBe('ブロンズ');
-    expect(calcLevel(300, 'ブロンズ')).toBe('シルバー');
-    expect(calcLevel(800, 'ブロンズ')).toBe('ゴールド');
-    expect(calcLevel(2000, 'ブロンズ')).toBe('VIP');
-  });
-
-  it('閾値未満なら現在のレベルを維持する', () => {
-    expect(calcLevel(100, 'ゴールド')).toBe('ゴールド');
-  });
-});
+import { setIdIn, toGiftItem, toHistoryEntry } from './user';
 
 describe('setIdIn', () => {
   it('on なら先頭に追加し、すでにあれば重複させない', () => {
@@ -26,17 +13,47 @@ describe('setIdIn', () => {
   });
 });
 
-describe('generateGiftCode', () => {
-  it('DISCOTQ-XXXX-XXXX 形式のコードを生成する', () => {
-    expect(generateGiftCode()).toMatch(/^DISCOTQ-[0-9A-Z]{1,4}-[0-9A-Z]{1,4}$/);
+describe('toHistoryEntry', () => {
+  it('台帳の行を履歴の表示用に変換する', () => {
+    const entry = toHistoryEntry({
+      id: 'x',
+      kind: 'exchange',
+      points: -300,
+      title: 'リワード交換: テスト',
+      video_id: null,
+      gift_id: 'gift-5',
+      gift_code: 'DISCOTQ-AAAA-BBBB-CCCC',
+      created_at: '2026-11-19T03:04:05Z',
+    });
+    expect(entry).toMatchObject({ id: 'x', kind: 'exchange', points: -300, giftCode: 'DISCOTQ-AAAA-BBBB-CCCC' });
+    expect(entry.date).not.toBe('');
   });
 });
 
-describe('createHistoryEntry', () => {
-  it('プレフィックス付き ID と渡した値で履歴を作る', () => {
-    const entry = createHistoryEntry('ph-ex-', 'リワード交換: テスト', -100, 'exchange');
-    expect(entry.id).toMatch(/^ph-ex-\d+$/);
-    expect(entry).toMatchObject({ title: 'リワード交換: テスト', points: -100, type: 'exchange' });
-    expect(entry.date).not.toBe('');
+describe('toGiftItem', () => {
+  it('API のギフトを画面用の形に変換する', () => {
+    expect(
+      toGiftItem({
+        id: 'gift-1',
+        name: 'A',
+        brand: 'B',
+        points_cost: 500,
+        icon_url: 'u',
+        category: 'c',
+        stock: 1,
+        popular: true,
+        value_description: 'd',
+      })
+    ).toEqual({
+      id: 'gift-1',
+      name: 'A',
+      brand: 'B',
+      pointsCost: 500,
+      iconUrl: 'u',
+      category: 'c',
+      stock: 1,
+      popular: true,
+      valueDescription: 'd',
+    });
   });
 });

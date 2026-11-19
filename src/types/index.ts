@@ -2,11 +2,10 @@ export type UserLevel = 'ブロンズ' | 'シルバー' | 'ゴールド' | 'VIP'
 
 export type NotificationType = 'success' | 'info' | 'warning';
 
-// 端末に保存する視聴者のリワード状態。isLoggedIn は「ウォレット開設済み」の印として使い、
-// 実際のログイン状態は AuthContext（サーバーのセッション）を正とする
+// 画面に出す視聴者の情報。ポイントはサーバーの point_ledger の集計（/api/me/rewards）
+// ログイン中は points がアカウントの残高、未ログインは unclaimedGuestPoints が端末の匿名IDに貯まった受取待ちの分
 export interface UserAccount {
   isLoggedIn: boolean;
-  id: string;
   name: string;
   email: string;
   avatar: string;
@@ -14,17 +13,17 @@ export interface UserAccount {
   totalEarnedPoints: number;
   unclaimedGuestPoints: number;
   level: UserLevel;
-  // 互換性のためキー名は広告時代のまま。中身は動画ID
-  watchedAdIds: string[];
-  pointHistory: PointHistoryEntry[];
 }
+
+export type LedgerKind = 'watch' | 'welcome' | 'guest_transfer_out' | 'exchange' | 'adjustment';
 
 export interface PointHistoryEntry {
   id: string;
   title: string;
   points: number;
   date: string;
-  type: 'watch' | 'lp_read' | 'exchange' | 'bonus';
+  kind: LedgerKind;
+  giftCode: string | null;
 }
 
 export interface GiftItem {

@@ -1,11 +1,8 @@
-import React, { createContext, useContext, useState } from 'react';
-import { GiftItem, UserAccount } from '../types';
-import type { FeedVideo } from '../types/api';
-import { GIFT_ITEMS } from '../data/gifts';
-import { LOCAL_STORAGE_KEY_USER } from '../constants/storage';
-import { createGuestUser } from '../constants/user';
+import React, { createContext, useContext } from 'react';
+import { GiftItem, PointHistoryEntry, UserAccount } from '../types';
+import type { FeedVideo, StartViewResponse } from '../types/api';
+import { GUEST_AVATAR_URL, GUEST_USER_NAME, MEMBER_AVATAR_URL } from '../constants/user';
 import { useAuth } from './AuthContext';
-import { usePersistentState } from './hooks/usePersistentState';
 import { AppNotification, ShowNotification, useNotification } from './hooks/useNotification';
 import { useModals } from './hooks/useModals';
 import { useFeedState } from './hooks/useFeedState';
@@ -48,9 +45,15 @@ interface AppContextType {
   commentCountFor: (video: FeedVideo) => number;
   setCommentCount: (videoId: string, count: number) => void;
 
-  // Reward System
-  claimWatchReward: (videoId: string, title: string) => RewardResult;
-  exchangePoints: (giftId: string) => ExchangeResult;
+  // 視聴リワード（サーバーの point_ledger が正）
+  claimedVideoIds: string[];
+  startView: (videoId: string) => Promise<StartViewResponse>;
+  claimWatchReward: (viewSessionId: string, videoId: string) => Promise<RewardResult>;
+  exchangePoints: (giftId: string) => Promise<ExchangeResult>;
+  pointHistory: PointHistoryEntry[];
+  hasMoreHistory: boolean;
+  historyStatus: 'idle' | 'loading' | 'error';
+  loadHistory: (more?: boolean) => Promise<void>;
 
   // Notifications
   notification: AppNotification | null;
@@ -61,41 +64,35 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const auth = useAuth();
-  const [giftItems] = useState<GiftItem[]>(GIFT_ITEMS);
-  const [wallet, setWallet] = usePersistentState<UserAccount>(LOCAL_STORAGE_KEY_USER, createGuestUser);
-
-  const isLoggedIn = auth.user !== null;
-  const displayName = auth.user?.display_name || auth.user?.email.split('@')[0] || wallet.name;
-  const user: UserAccount = {
-    ...wallet,
-    isLoggedIn,
-    name: isLoggedIn ? displayName : wallet.name,
-    email: auth.user?.email ?? '',
-  };
+  const authUserId = auth.user?.id ?? null;
+  const authReady = auth.status === 'ready';
 
   const { notification, showNotification } = useNotification();
   const modals = useModals();
   const feed = useFeedState();
-  const engagement = useEngagement({
-    authUserId: auth.user?.id ?? null,
-    authReady: auth.status === 'ready',
-    showNotification,
-  });
-  const rewards = useRewards({
-    user,
-    isLoggedIn,
-    setUser: setWallet,
-    giftItems,
+  const engagement = useEngagement({ authUserId, authReady, showNotification });
+  const { rewardSummary, applySummary, reloadRewards, ...rewards } = useRewards({
+    authUserId,
+    authReady,
     setIsAuthModalOpen: modals.setIsAuthModalOpen,
     showNotification,
   });
-  useAccount({
-    authUser: auth.user,
-    authReady: auth.status === 'ready',
-    user: wallet,
-    setUser: setWallet,
-    showNotification,
-  });
+  useAccount({ authUserId, authReady, applySummary, reloadRewards, showNotification });
+
+  const isLoggedIn = auth.user !== null;
+  // サーバーの残高がログイン中の本人のものか（切り替わった直後は前の本人の値が残っている）
+  const isOwnSummary = (rewardSummary.owner === 'user') === isLoggedIn;
+  const balance = isOwnSummary ? rewardSummary.balance : 0;
+  const user: UserAccount = {
+    isLoggedIn,
+    name: isLoggedIn ? auth.user?.display_name || auth.user?.email.split('@')[0] || '' : GUEST_USER_NAME,
+    email: auth.user?.email ?? '',
+    avatar: isLoggedIn ? MEMBER_AVATAR_URL : GUEST_AVATAR_URL,
+    points: isLoggedIn ? balance : 0,
+    totalEarnedPoints: isLoggedIn && isOwnSummary ? rewardSummary.total_earned : 0,
+    unclaimedGuestPoints: isLoggedIn ? 0 : balance,
+    level: isLoggedIn && isOwnSummary ? rewardSummary.level : 'ブロンズ',
+  };
 
   const currentVideo = feed.videos[feed.currentVideoIndex] ?? feed.videos[0] ?? null;
 
@@ -108,7 +105,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         ...rewards,
         currentVideo,
         user,
-        giftItems,
         notification,
         showNotification,
       }}

@@ -23,7 +23,16 @@ const minWatchSecondsFor = (video: FeedVideo) =>
     : DEFAULT_MIN_WATCH_SECONDS;
 
 export const VideoCard: React.FC<VideoCardProps> = ({ video, isActive }) => {
-  const { user, likedVideoIds, bookmarkedVideoIds, toggleLike, setIsAuthModalOpen, claimWatchReward } = useApp();
+  const {
+    user,
+    likedVideoIds,
+    bookmarkedVideoIds,
+    toggleLike,
+    setIsAuthModalOpen,
+    claimedVideoIds,
+    startView,
+    claimWatchReward,
+  } = useApp();
 
   const [isMuted, setIsMuted] = useState(true);
   const [showCenterIcon, setShowCenterIcon] = useState<CenterIconType | null>(null);
@@ -31,18 +40,20 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, isActive }) => {
 
   const isLiked = likedVideoIds.includes(video.id);
   const isBookmarked = bookmarkedVideoIds.includes(video.id);
-  const isWatchedBefore = user.watchedAdIds.includes(video.id);
-  const minWatchSeconds = minWatchSecondsFor(video);
-  const rewardPoints = DEFAULT_WATCH_REWARD_POINTS;
 
-  // 再生同期・視聴タイマー・リワード受取状態
+  // 再生同期・視聴タイマー・リワード受取状態（受け取れるかどうかはサーバーが判断する）
   const {
     videoRef,
     isPlaying,
     setIsPlaying,
+    setIsBuffering,
     watchSeconds,
+    minWatchSeconds,
+    rewardPoints,
+    rewardEligible,
     hasCompletedWatch,
     isClaimed,
+    isClaiming,
     videoError,
     setVideoError,
     showClaimPrompt,
@@ -50,11 +61,13 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, isActive }) => {
     triggerClaimSuccess,
   } = useVideoPlayback({
     videoId: video.id,
-    minWatchSeconds,
+    fallbackMinWatchSeconds: minWatchSecondsFor(video),
+    fallbackRewardPoints: DEFAULT_WATCH_REWARD_POINTS,
     isActive,
-    isWatchedBefore,
+    isClaimedBefore: claimedVideoIds.includes(video.id),
     isLoggedIn: user.isLoggedIn,
-    claimReward: () => claimWatchReward(video.id, video.title),
+    startView,
+    claimReward: (viewSessionId) => claimWatchReward(viewSessionId, video.id),
   });
 
   const triggerVisualIcon = (type: CenterIconType) => {
@@ -95,10 +108,11 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, isActive }) => {
     if (!hasCompletedWatch) return;
 
     if (!user.isLoggedIn) {
-      triggerClaimSuccess();
+      // ゲストは端末の匿名IDに貯め、ログインを勧める（ログイン時にアカウントへ引き継ぐ）
+      void triggerClaimSuccess();
       setIsAuthModalOpen(true);
     } else if (!isClaimed) {
-      triggerClaimSuccess();
+      void triggerClaimSuccess();
     }
   };
 
@@ -118,6 +132,11 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, isActive }) => {
           muted={isMuted}
           preload="auto"
           onError={() => setVideoError(true)}
+          // 視聴タイマーは実際に再生している間だけ進める（OS のメディア操作で止めた場合も含む）
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
+          onWaiting={() => setIsBuffering(true)}
+          onPlaying={() => setIsBuffering(false)}
           className="absolute inset-0 w-full h-full object-cover"
         />
       ) : (
@@ -137,16 +156,21 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, isActive }) => {
 
       <CardTopBar video={video} isMuted={isMuted} onToggleSound={toggleSound} />
 
-      <WatchRewardRing
-        rewardPoints={rewardPoints}
-        minWatchSeconds={minWatchSeconds}
-        watchSeconds={watchSeconds}
-        hasCompletedWatch={hasCompletedWatch}
-        isClaimed={isClaimed}
-        onClaim={handleClaimReward}
-      />
+      {/* 自分が投稿した動画はリワードの対象外 */}
+      {rewardEligible && (
+        <WatchRewardRing
+          rewardPoints={rewardPoints}
+          minWatchSeconds={minWatchSeconds}
+          watchSeconds={watchSeconds}
+          hasCompletedWatch={hasCompletedWatch}
+          isClaimed={isClaimed}
+          isClaiming={isClaiming}
+          showClaimedLabel={justClaimedEffect}
+          onClaim={handleClaimReward}
+        />
+      )}
 
-      {showClaimPrompt && !user.isLoggedIn && (
+      {rewardEligible && showClaimPrompt && !user.isLoggedIn && (
         <GuestClaimPrompt rewardPoints={rewardPoints} onClaim={handleClaimReward} />
       )}
 

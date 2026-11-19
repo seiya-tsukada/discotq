@@ -1,4 +1,5 @@
 // バックエンド (backend/app/schemas) のレスポンス型
+import type { LedgerKind, UserLevel } from './index';
 
 export type VideoMime = 'video/mp4' | 'video/webm' | 'video/quicktime';
 export type VideoStatus =
@@ -177,4 +178,72 @@ export interface PreviewUrlResponse {
   video_url: string;
   thumb_url: string | null;
   expires_in: number;
+}
+
+// ---------------------------------------------------------------- rewards
+
+export interface RewardSummary {
+  owner: 'user' | 'anonymous';
+  balance: number;
+  total_earned: number;
+  level: UserLevel;
+}
+
+export interface MyRewardsResponse extends RewardSummary {
+  claimed_video_ids: string[];
+}
+
+export interface StartViewResponse {
+  view_session_id: string;
+  min_watch_seconds: number;
+  reward_points: number;
+  already_claimed: boolean;
+  reward_eligible: boolean;
+}
+
+export interface ClaimRewardResponse {
+  earned: boolean;
+  points: number;
+  video_id: string;
+  summary: RewardSummary;
+}
+
+export interface LedgerEntry {
+  id: string;
+  kind: LedgerKind;
+  points: number;
+  title: string;
+  video_id: string | null;
+  gift_id: string | null;
+  gift_code: string | null;
+  created_at: string;
+}
+
+export interface RewardHistoryResponse {
+  items: LedgerEntry[];
+  next_cursor: string | null;
+}
+
+export interface ActivateRewardsResponse {
+  transferred_points: number;
+  welcome_points: number;
+  summary: RewardSummary;
+}
+
+export interface ApiGift {
+  id: string;
+  name: string;
+  brand: string;
+  points_cost: number;
+  icon_url: string;
+  category: string;
+  stock: number;
+  popular: boolean;
+  value_description: string;
+}
+
+export interface ExchangeResponse {
+  gift: ApiGift;
+  code: string;
+  summary: RewardSummary;
 }
