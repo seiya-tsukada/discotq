@@ -130,12 +130,6 @@ export const VideoFeed: React.FC = () => {
           >
             <ChevronUp className="w-5 h-5" />
           </button>
-          <div className="text-center">
-            <span className="text-[11px] font-semibold text-slate-300 bg-slate-900 px-2.5 py-1 rounded-md border border-slate-800">
-              {currentVideoIndex + 1} / {videos.length}
-              {hasMoreVideos ? '+' : ''}
-            </span>
-          </div>
           <button
             onClick={() => (isLast && hasMoreVideos ? void loadMoreVideos() : goToNext())}
             disabled={isLast && !hasMoreVideos}
@@ -194,14 +188,6 @@ export const VideoFeed: React.FC = () => {
               </button>
             </div>
           )}
-        </div>
-
-        <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-left text-xs text-slate-400">
-          <p className="font-semibold text-slate-300 mb-1">操作案内</p>
-          <p>・↑ / ↓ キー : 前 / 次の動画</p>
-          <p>・リングタップ : リワードの受取</p>
-          <p>・画面クリック : 一時停止 / 再生</p>
-          <p>・ダブルタップ : いいね</p>
         </div>
       </div>
     </div>

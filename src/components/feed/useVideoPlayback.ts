@@ -22,8 +22,9 @@ export const useVideoPlayback = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [watchSeconds, setWatchSeconds] = useState(0);
-  const [hasCompletedWatch, setHasCompletedWatch] = useState(false);
-  const [isClaimed, setIsClaimed] = useState(false);
+  // 受取済みの動画は最初の描画から受取済みとして扱う（「受取完了」を受け取った直後だけ出すため）
+  const [hasCompletedWatch, setHasCompletedWatch] = useState(isWatchedBefore);
+  const [isClaimed, setIsClaimed] = useState(isWatchedBefore);
   const [videoError, setVideoError] = useState(false);
   const [showClaimPrompt, setShowClaimPrompt] = useState(false);
 
