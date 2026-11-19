@@ -1,35 +1,25 @@
-import { useEffect, useRef, useState } from 'react';
-import { UserAccount, UserComment } from '../../types';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FeedVideo } from '../../types/api';
 import { engagementApi, errorMessage } from '../../lib/api';
 import { setIdIn } from '../../lib/user';
 import { ShowNotification } from './useNotification';
 
 interface Deps {
-  user: UserAccount;
   // サーバーのログイン状態（AuthContext）。ユーザーが切り替わったら自分のいいね・保存を取り直す
   authUserId: string | null;
   authReady: boolean;
-  displayName: string;
-  setIsAuthModalOpen: (open: boolean) => void;
   showNotification: ShowNotification;
 }
 
 // いいね・保存はサーバーに保存する（ログイン中はアカウント、未ログインは端末の匿名 ID に紐づく）。
-// コメントはログインユーザーのみ投稿でき、現状は端末内だけで保持する
-export const useEngagement = ({
-  user,
-  authUserId,
-  authReady,
-  displayName,
-  setIsAuthModalOpen,
-  showNotification,
-}: Deps) => {
+// コメント本体はコメント欄（useComments）が読み書きし、ここでは件数表示だけを持つ
+export const useEngagement = ({ authUserId, authReady, showNotification }: Deps) => {
   const [likedVideoIds, setLikedVideoIds] = useState<string[]>([]);
   const [bookmarkedVideoIds, setBookmarkedVideoIds] = useState<string[]>([]);
   // 自分の操作で変わった最新のいいね数。無ければフィード取得時の like_count を使う
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
-  const [comments, setComments] = useState<Record<string, UserComment[]>>({});
+  // コメント欄で取得・投稿・削除した後の最新のコメント数。無ければフィード取得時の comment_count を使う
+  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
   // 同じ動画への連打で、リクエストが入れ違わないようにする
   const pending = useRef(new Set<string>());
 
@@ -53,6 +43,10 @@ export const useEngagement = ({
   }, [authReady, authUserId]);
 
   const likeCountFor = (video: FeedVideo) => likeCounts[video.id] ?? video.like_count;
+  const commentCountFor = (video: FeedVideo) => commentCounts[video.id] ?? video.comment_count;
+  const setCommentCount = useCallback((videoId: string, count: number) => {
+    setCommentCounts((c) => (c[videoId] === count ? c : { ...c, [videoId]: count }));
+  }, []);
 
   const toggleLike = async (video: FeedVideo) => {
     const key = `like:${video.id}`;
@@ -94,33 +88,13 @@ export const useEngagement = ({
     }
   };
 
-  const addComment = (videoId: string, text: string) => {
-    if (!text.trim()) return;
-    // ゲストはコメントできない（UI でも入力欄を出さないが、念のためここでも止める）
-    if (authUserId === null) {
-      setIsAuthModalOpen(true);
-      return;
-    }
-    const newComment: UserComment = {
-      id: 'cmt-' + Date.now(),
-      videoId,
-      userName: displayName,
-      userAvatar: user.avatar,
-      comment: text,
-      likes: 0,
-      timeAgo: 'たった今',
-    };
-    setComments((prev) => ({ ...prev, [videoId]: [newComment, ...(prev[videoId] || [])] }));
-    showNotification('コメントを投稿しました', undefined, 'success');
-  };
-
   return {
-    comments,
     likedVideoIds,
     bookmarkedVideoIds,
     likeCountFor,
     toggleLike,
     toggleBookmark,
-    addComment,
+    commentCountFor,
+    setCommentCount,
   };
 };

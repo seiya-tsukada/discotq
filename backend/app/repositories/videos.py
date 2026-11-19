@@ -142,7 +142,9 @@ def list_feed(
         """
         select v.*,
                case when v.source = 'user' then u.display_name end as uploader_name,
-               (select count(*) from discotq.video_likes l where l.video_id = v.id) as like_count
+               (select count(*) from discotq.video_likes l where l.video_id = v.id) as like_count,
+               (select count(*) from discotq.video_comments c
+                where c.video_id = v.id and c.deleted_at is null) as comment_count
         from discotq.videos v
         left join discotq.users u on u.id = v.uploader_user_id
         where v.status = 'approved'

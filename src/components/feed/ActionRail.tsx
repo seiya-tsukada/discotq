@@ -15,8 +15,8 @@ const baseButton =
 
 // 右側: いいね・コメント・保存・共有
 export const ActionRail: React.FC<ActionRailProps> = ({ video, isLiked, isBookmarked }) => {
-  const { toggleLike, toggleBookmark, likeCountFor, comments, setIsCommentsModalOpen, setIsShareModalOpen } = useApp();
-  const commentCount = comments[video.id]?.length ?? 0;
+  const { toggleLike, toggleBookmark, likeCountFor, commentCountFor, setIsCommentsModalOpen, setIsShareModalOpen } =
+    useApp();
 
   return (
     <div
@@ -42,7 +42,7 @@ export const ActionRail: React.FC<ActionRailProps> = ({ video, isLiked, isBookma
         <button onClick={() => setIsCommentsModalOpen(true)} className={baseButton} title="コメント">
           <MessageSquare className="w-4 h-4" />
         </button>
-        <span className="text-[10px] font-medium text-slate-300 mt-1">{commentCount}</span>
+        <span className="text-[10px] font-medium text-slate-300 mt-1">{formatCount(commentCountFor(video))}</span>
       </div>
 
       <div className="flex flex-col items-center">

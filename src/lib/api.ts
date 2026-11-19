@@ -6,6 +6,7 @@ import type {
   AdminVideosResponse,
   AuthUser,
   BookmarkResponse,
+  CommentsResponse,
   FeedResponse,
   LikeResponse,
   MyEngagementResponse,
@@ -16,6 +17,7 @@ import type {
   UploadConfig,
   UploadIntentRequest,
   UploadIntentResponse,
+  VideoComment,
   VideoSource,
   VideoStatus,
 } from '../types/api';
@@ -145,6 +147,17 @@ export const engagementApi = {
   unlike: (videoId: string) => request<LikeResponse>('DELETE', `/videos/${videoId}/like`),
   bookmark: (videoId: string) => request<BookmarkResponse>('POST', `/videos/${videoId}/bookmark`),
   unbookmark: (videoId: string) => request<BookmarkResponse>('DELETE', `/videos/${videoId}/bookmark`),
+};
+
+// コメント。一覧は誰でも、投稿はメール確認済みのログインユーザー、削除は本人か管理者
+export const COMMENT_MAX_LENGTH = 500;
+
+export const commentApi = {
+  list: (videoId: string, cursor?: string | null, limit = 20) =>
+    request<CommentsResponse>('GET', `/videos/${videoId}/comments`, { query: { cursor, limit } }),
+  create: (videoId: string, body: string) =>
+    request<VideoComment>('POST', `/videos/${videoId}/comments`, { body: { body } }),
+  remove: (commentId: string) => request<{ ok: boolean }>('DELETE', `/comments/${commentId}`),
 };
 
 export const adminApi = {

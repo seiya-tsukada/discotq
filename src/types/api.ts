@@ -31,6 +31,8 @@ export interface FeedVideo {
   approved_at: string;
   // フィードは CDN で短時間キャッシュされるため、少し遅れることがある
   like_count: number;
+  // 削除済みを除いたコメント数（like_count と同じく少し遅れることがある）
+  comment_count: number;
 }
 
 export interface FeedResponse {
@@ -50,6 +52,24 @@ export interface BookmarkResponse {
 export interface MyEngagementResponse {
   liked_video_ids: string[];
   bookmarked_video_ids: string[];
+}
+
+export interface VideoComment {
+  id: string;
+  video_id: string;
+  /** 投稿者の表示名。未設定なら null */
+  author_name: string | null;
+  body: string;
+  created_at: string;
+  is_mine: boolean;
+  /** 本人か管理者なら削除できる */
+  can_delete: boolean;
+}
+
+export interface CommentsResponse {
+  items: VideoComment[];
+  next_cursor: string | null;
+  total_count: number;
 }
 
 export interface UploadConfig {
