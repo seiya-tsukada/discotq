@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, ShoppingBag, History, Check, Copy, ArrowRight, CreditCard } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { X, ShoppingBag, History, Check, Copy, ArrowRight, CreditCard, Loader2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { GiftItem } from '../types';
 import { COPY_FEEDBACK_DURATION_MS } from '../constants/timing';
@@ -11,6 +11,10 @@ export const PointStoreModal: React.FC = () => {
     user,
     giftItems,
     exchangePoints,
+    pointHistory,
+    hasMoreHistory,
+    historyStatus,
+    loadHistory,
     setIsAuthModalOpen,
     showNotification,
   } = useApp();
@@ -19,16 +23,29 @@ export const PointStoreModal: React.FC = () => {
   const [selectedGift, setSelectedGift] = useState<GiftItem | null>(null);
   const [issuedCode, setIssuedCode] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
+  // 交換を送っている間のギフト ID（連打で二重に送らない）
+  const [exchangingGiftId, setExchangingGiftId] = useState<string | null>(null);
+
+  // 履歴はサーバーから読む。開いたとき・ログイン状態や交換で中身が空に戻ったときに取り直す
+  const needsHistory = isPointStoreOpen && activeTab === 'history' && pointHistory.length === 0;
+  useEffect(() => {
+    if (needsHistory) void loadHistory();
+    // loadHistory はカーソルが変わるたびに作り直されるため、取り直す条件だけで動かす
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [needsHistory, user.isLoggedIn]);
 
   if (!isPointStoreOpen) return null;
 
-  const handleExchange = (gift: GiftItem) => {
+  const handleExchange = async (gift: GiftItem) => {
     if (!user.isLoggedIn) {
       setIsAuthModalOpen(true);
       return;
     }
+    if (exchangingGiftId) return;
 
-    const result = exchangePoints(gift.id);
+    setExchangingGiftId(gift.id);
+    const result = await exchangePoints(gift.id);
+    setExchangingGiftId(null);
     if (result.success && result.code) {
       setSelectedGift(gift);
       setIssuedCode(result.code);
@@ -121,7 +138,7 @@ export const PointStoreModal: React.FC = () => {
             }`}
           >
             <History className="w-3.5 h-3.5" />
-            取引・獲得履歴（{user.pointHistory.length}件）
+            取引・獲得履歴
           </button>
         </div>
 
@@ -159,6 +176,7 @@ export const PointStoreModal: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {giftItems.map((gift) => {
                 const canAfford = user.points >= gift.pointsCost;
+                const isExchanging = exchangingGiftId === gift.id;
                 return (
                   <div
                     key={gift.id}
@@ -186,8 +204,8 @@ export const PointStoreModal: React.FC = () => {
                       </div>
 
                       <button
-                        onClick={() => handleExchange(gift)}
-                        disabled={user.isLoggedIn && !canAfford}
+                        onClick={() => void handleExchange(gift)}
+                        disabled={(user.isLoggedIn && !canAfford) || exchangingGiftId !== null}
                         className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer flex items-center gap-1 ${
                           !user.isLoggedIn
                             ? 'bg-slate-800 hover:bg-slate-750 text-slate-300 border border-slate-700'
@@ -198,6 +216,11 @@ export const PointStoreModal: React.FC = () => {
                       >
                         {!user.isLoggedIn ? (
                           '登録して交換'
+                        ) : isExchanging ? (
+                          <>
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                            <span>手続き中</span>
+                          </>
                         ) : canAfford ? (
                           <>
                             <span>交換申請</span>
@@ -214,27 +237,45 @@ export const PointStoreModal: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-2">
-              {user.pointHistory.length === 0 ? (
+              {pointHistory.length === 0 ? (
                 <div className="text-center py-10 text-slate-500">
-                  <p className="text-xs">リワードの獲得・交換履歴はありません。</p>
+                  {historyStatus === 'loading' ? (
+                    <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+                  ) : (
+                    <p className="text-xs">リワードの獲得・交換履歴はありません。</p>
+                  )}
                 </div>
               ) : (
-                user.pointHistory.map((item) => (
-                  <div
-                    key={item.id}
-                    className="p-3 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-between"
-                  >
-                    <div>
-                      <h4 className="text-xs font-medium text-slate-200">{item.title}</h4>
-                      <p className="text-[10px] text-slate-500 mt-0.5">{item.date}</p>
-                    </div>
-                    <span
-                      className={`text-xs font-semibold ${item.points > 0 ? 'text-emerald-400' : 'text-slate-400'}`}
+                <>
+                  {pointHistory.map((item) => (
+                    <div
+                      key={item.id}
+                      className="p-3 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-between gap-3"
                     >
-                      {item.points > 0 ? `+${item.points}` : item.points} pt
-                    </span>
-                  </div>
-                ))
+                      <div className="min-w-0">
+                        <h4 className="text-xs font-medium text-slate-200">{item.title}</h4>
+                        <p className="text-[10px] text-slate-500 mt-0.5">{item.date}</p>
+                        {item.giftCode && (
+                          <p className="font-mono text-[11px] text-slate-300 mt-0.5 tracking-wider">{item.giftCode}</p>
+                        )}
+                      </div>
+                      <span
+                        className={`text-xs font-semibold shrink-0 ${item.points > 0 ? 'text-emerald-400' : 'text-slate-400'}`}
+                      >
+                        {item.points > 0 ? `+${item.points}` : item.points} pt
+                      </span>
+                    </div>
+                  ))}
+                  {hasMoreHistory && (
+                    <button
+                      onClick={() => void loadHistory(true)}
+                      disabled={historyStatus === 'loading'}
+                      className="w-full py-2 text-xs text-slate-400 hover:text-white transition-colors cursor-pointer"
+                    >
+                      {historyStatus === 'loading' ? '読み込み中…' : 'さらに表示'}
+                    </button>
+                  )}
+                </>
               )}
             </div>
           )}

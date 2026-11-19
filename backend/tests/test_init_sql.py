@@ -43,3 +43,19 @@ def test_comment_constraints_are_added_to_an_older_table(db: Conn) -> None:
         """
     ).fetchone()
     assert row is not None and row["n"] == 1
+
+
+def test_reward_constraints_are_not_duplicated(db: Conn) -> None:
+    db.execute(SQL)
+    db.execute(SQL)
+    rows = db.execute(
+        """
+        select conrelid::regclass::text as t, conname from pg_constraint
+        where conrelid in ('discotq.point_ledger'::regclass, 'discotq.view_sessions'::regclass)
+          and contype = 'c'
+        order by 1, 2
+        """
+    ).fetchall()
+    names = [r["conname"] for r in rows]
+    assert len(names) == len(set(names))
+    assert "point_ledger_sign_chk" in names and "view_sessions_owner_chk" in names

@@ -1,10 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { Check, Sparkles } from 'lucide-react';
+import React from 'react';
+import { Check, Loader2, Sparkles } from 'lucide-react';
 
 const RING_RADIUS = 20;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
-// 「受取完了」の表示を出しておく時間。その後フェードアウトする（リングのチェックは残る）
-const CLAIMED_LABEL_VISIBLE_MS = 2500;
 
 interface WatchRewardRingProps {
   rewardPoints: number;
@@ -12,6 +10,11 @@ interface WatchRewardRingProps {
   watchSeconds: number;
   hasCompletedWatch: boolean;
   isClaimed: boolean;
+  // サーバーへ受取を送っている間
+  isClaiming: boolean;
+  // 受け取った直後だけ「受取完了」を出し、その後フェードアウトする（リングのチェックは残る）。
+  // 受取済みの動画に戻ってきたときや、受取済みの一覧が後から届いたときは出さない
+  showClaimedLabel: boolean;
   onClaim: (e: React.MouseEvent) => void;
 }
 
@@ -22,20 +25,14 @@ export const WatchRewardRing: React.FC<WatchRewardRingProps> = ({
   watchSeconds,
   hasCompletedWatch,
   isClaimed,
+  isClaiming,
+  showClaimedLabel,
   onClaim,
 }) => {
   // Ring progress calculations
   const progressRatio = Math.min(1, watchSeconds / minWatchSeconds);
   const strokeDashoffset = RING_CIRCUMFERENCE - progressRatio * RING_CIRCUMFERENCE;
   const remainingSeconds = Math.max(0, Math.ceil(minWatchSeconds - watchSeconds));
-
-  // 受け取った直後だけ「受取完了」を出す。受取済みの動画に戻ってきたときは最初から出さない
-  const [showClaimedLabel, setShowClaimedLabel] = useState(!isClaimed);
-  useEffect(() => {
-    if (!isClaimed) return;
-    const timer = window.setTimeout(() => setShowClaimedLabel(false), CLAIMED_LABEL_VISIBLE_MS);
-    return () => window.clearTimeout(timer);
-  }, [isClaimed]);
 
   return (
     <div
@@ -54,6 +51,11 @@ export const WatchRewardRing: React.FC<WatchRewardRingProps> = ({
             <p className="text-[10px] text-slate-400 leading-none">受取完了</p>
             <p className="text-xs font-bold text-emerald-400 leading-tight">+{rewardPoints}pt</p>
           </div>
+        ) : isClaiming ? (
+          <div className="bg-slate-900/85 backdrop-blur-md border border-slate-700 px-2.5 py-1 rounded-lg">
+            <p className="text-[10px] text-slate-400 leading-none">受取中…</p>
+            <p className="text-xs font-semibold text-slate-200 leading-tight">+{rewardPoints}pt</p>
+          </div>
         ) : hasCompletedWatch ? (
           <div className="bg-blue-900/85 backdrop-blur-md border border-blue-400 px-2.5 py-1 rounded-lg shadow-sm">
             <p className="text-[10px] text-blue-200 font-semibold leading-none">タップして受取</p>
@@ -70,7 +72,7 @@ export const WatchRewardRing: React.FC<WatchRewardRingProps> = ({
       {/* Circular SVG Ring Widget */}
       <button
         onClick={onClaim}
-        disabled={!hasCompletedWatch && !isClaimed}
+        disabled={(!hasCompletedWatch && !isClaimed) || isClaiming}
         className={`relative flex items-center justify-center w-11 h-11 rounded-full backdrop-blur-md transition-all duration-300 border ${
           isClaimed
             ? 'bg-slate-900/90 border-emerald-500/30 text-emerald-400 shadow-sm'
@@ -99,6 +101,8 @@ export const WatchRewardRing: React.FC<WatchRewardRingProps> = ({
         <div className="absolute inset-0 flex items-center justify-center text-center">
           {isClaimed ? (
             <Check className="w-4 h-4 text-emerald-400" />
+          ) : isClaiming ? (
+            <Loader2 className="w-4 h-4 text-white animate-spin" />
           ) : hasCompletedWatch ? (
             <Sparkles className="w-4 h-4 text-white" />
           ) : (

@@ -1,22 +1,6 @@
-import { PointHistoryEntry, UserLevel } from '../types';
-import { GIFT_CODE_PREFIX, LEVEL_THRESHOLDS, POINT_HISTORY_DATE_FORMAT } from '../constants/rewards';
-
-export const createHistoryEntry = (
-  idPrefix: string,
-  title: string,
-  points: number,
-  type: PointHistoryEntry['type']
-): PointHistoryEntry => ({
-  id: idPrefix + Date.now(),
-  title,
-  points,
-  date: new Date().toLocaleDateString('ja-JP', POINT_HISTORY_DATE_FORMAT),
-  type,
-});
-
-// 閾値に届かない場合は現在のレベルを維持する
-export const calcLevel = (totalEarnedPoints: number, currentLevel: UserLevel): UserLevel =>
-  LEVEL_THRESHOLDS.find((t) => totalEarnedPoints >= t.minTotalPoints)?.level ?? currentLevel;
+import { GiftItem, PointHistoryEntry } from '../types';
+import type { ApiGift, LedgerEntry } from '../types/api';
+import { POINT_HISTORY_DATE_FORMAT } from '../constants/rewards';
 
 // on なら追加（重複させない）、off なら除去する
 export const setIdIn = (ids: string[], id: string, on: boolean): string[] => {
@@ -24,6 +8,23 @@ export const setIdIn = (ids: string[], id: string, on: boolean): string[] => {
   return on ? [id, ...without] : without;
 };
 
-const randomBlock = () => Math.random().toString(36).substring(2, 6).toUpperCase();
+export const toHistoryEntry = (e: LedgerEntry): PointHistoryEntry => ({
+  id: e.id,
+  title: e.title,
+  points: e.points,
+  date: new Date(e.created_at).toLocaleDateString('ja-JP', POINT_HISTORY_DATE_FORMAT),
+  kind: e.kind,
+  giftCode: e.gift_code,
+});
 
-export const generateGiftCode = () => `${GIFT_CODE_PREFIX}-${randomBlock()}-${randomBlock()}`;
+export const toGiftItem = (g: ApiGift): GiftItem => ({
+  id: g.id,
+  name: g.name,
+  brand: g.brand,
+  pointsCost: g.points_cost,
+  iconUrl: g.icon_url,
+  category: g.category,
+  stock: g.stock,
+  popular: g.popular,
+  valueDescription: g.value_description,
+});

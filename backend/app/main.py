@@ -20,7 +20,7 @@ from backend.app.observability import (
     describe_db_target,
     describe_settings_error,
 )
-from backend.app.routers import admin, auth, comments, engagement, health, me, public, uploads
+from backend.app.routers import admin, auth, comments, engagement, health, me, public, rewards, uploads
 
 configure_logging()
 logger = logging.getLogger("discotq.startup")
@@ -82,6 +82,7 @@ def create_app() -> FastAPI:
         me.router,
         engagement.router,
         comments.router,
+        rewards.router,
         admin.router,
         auth.router,
     ):

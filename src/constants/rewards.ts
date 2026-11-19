@@ -1,19 +1,7 @@
-import { UserLevel } from '../types';
-
-// 累計獲得ポイントによるレベル判定（上から順に評価）
-export const LEVEL_THRESHOLDS: { minTotalPoints: number; level: UserLevel }[] = [
-  { minTotalPoints: 2000, level: 'VIP' },
-  { minTotalPoints: 800, level: 'ゴールド' },
-  { minTotalPoints: 300, level: 'シルバー' },
-];
-
-export const WELCOME_BONUS_POINTS = 30;
-// 動画1本の視聴リワード（動画ごとの設定は持たないため一律）
+// 付与ポイント・必要秒数・レベル・ギフトはサーバー（backend/app/services/rewards.py）が正。
+// ここの値は、視聴開始の応答が返るまでの表示にだけ使う
 export const DEFAULT_WATCH_REWARD_POINTS = 10;
-// リワード受取に必要な最低視聴秒数（動画がこれより短い場合は動画の長さ）
 export const DEFAULT_MIN_WATCH_SECONDS = 5;
-
-export const GIFT_CODE_PREFIX = 'DISCOTQ';
 
 export const CONFETTI_OPTIONS = {
   particleCount: 40,

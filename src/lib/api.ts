@@ -1,19 +1,26 @@
 import { getAnonymousId } from './anonymousId';
 import type {
+  ActivateRewardsResponse,
   AdminStats,
   AdminVideoDetail,
   AdminVideo,
   AdminVideosResponse,
   AuthUser,
   BookmarkResponse,
+  ClaimRewardResponse,
   CommentsResponse,
+  ExchangeResponse,
+  ApiGift,
   FeedResponse,
   LikeResponse,
   MyEngagementResponse,
+  MyRewardsResponse,
   MyVideo,
   MyVideosResponse,
   PresignedPut,
   PreviewUrlResponse,
+  RewardHistoryResponse,
+  StartViewResponse,
   UploadConfig,
   UploadIntentRequest,
   UploadIntentResponse,
@@ -147,6 +154,21 @@ export const engagementApi = {
   unlike: (videoId: string) => request<LikeResponse>('DELETE', `/videos/${videoId}/like`),
   bookmark: (videoId: string) => request<BookmarkResponse>('POST', `/videos/${videoId}/bookmark`),
   unbookmark: (videoId: string) => request<BookmarkResponse>('DELETE', `/videos/${videoId}/bookmark`),
+};
+
+// 視聴リワード。未ログインは X-Anonymous-Id に貯まり、ログイン後の activate でアカウントに引き継ぐ
+export const rewardsApi = {
+  mine: () => request<MyRewardsResponse>('GET', '/me/rewards'),
+  history: (cursor?: string | null, limit = 20) =>
+    request<RewardHistoryResponse>('GET', '/me/rewards/history', { query: { cursor, limit } }),
+  startView: (videoId: string) => request<StartViewResponse>('POST', `/videos/${videoId}/views`),
+  claim: (viewSessionId: string) => request<ClaimRewardResponse>('POST', `/views/${viewSessionId}/claim`),
+  activate: () => request<ActivateRewardsResponse>('POST', '/me/rewards/activate'),
+  gifts: () => request<{ items: ApiGift[] }>('GET', '/rewards/gifts'),
+  exchange: (giftId: string, idempotencyKey: string) =>
+    request<ExchangeResponse>('POST', '/me/rewards/exchange', {
+      body: { gift_id: giftId, idempotency_key: idempotencyKey },
+    }),
 };
 
 // コメント。一覧は誰でも、投稿はメール確認済みのログインユーザー、削除は本人か管理者
