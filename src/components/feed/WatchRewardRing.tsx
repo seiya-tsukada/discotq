@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Check, Sparkles } from 'lucide-react';
 
 const RING_RADIUS = 20;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+// 「受取完了」の表示を出しておく時間。その後フェードアウトする（リングのチェックは残る）
+const CLAIMED_LABEL_VISIBLE_MS = 2500;
 
 interface WatchRewardRingProps {
   rewardPoints: number;
@@ -27,6 +29,14 @@ export const WatchRewardRing: React.FC<WatchRewardRingProps> = ({
   const strokeDashoffset = RING_CIRCUMFERENCE - progressRatio * RING_CIRCUMFERENCE;
   const remainingSeconds = Math.max(0, Math.ceil(minWatchSeconds - watchSeconds));
 
+  // 受け取った直後だけ「受取完了」を出す。受取済みの動画に戻ってきたときは最初から出さない
+  const [showClaimedLabel, setShowClaimedLabel] = useState(!isClaimed);
+  useEffect(() => {
+    if (!isClaimed) return;
+    const timer = window.setTimeout(() => setShowClaimedLabel(false), CLAIMED_LABEL_VISIBLE_MS);
+    return () => window.clearTimeout(timer);
+  }, [isClaimed]);
+
   return (
     <div
       className="absolute top-14 right-3.5 z-25 pointer-events-auto flex items-center gap-2"
@@ -35,7 +45,12 @@ export const WatchRewardRing: React.FC<WatchRewardRingProps> = ({
       {/* Label to the LEFT of the ring */}
       <div className="text-right">
         {isClaimed ? (
-          <div className="bg-slate-900/85 backdrop-blur-md border border-slate-800 px-2.5 py-1 rounded-lg">
+          <div
+            aria-hidden={!showClaimedLabel}
+            className={`bg-slate-900/85 backdrop-blur-md border border-slate-800 px-2.5 py-1 rounded-lg transition-opacity duration-500 ${
+              showClaimedLabel ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
             <p className="text-[10px] text-slate-400 leading-none">受取完了</p>
             <p className="text-xs font-bold text-emerald-400 leading-tight">+{rewardPoints}pt</p>
           </div>
