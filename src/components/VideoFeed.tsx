@@ -13,6 +13,7 @@ import {
 import { useApp } from '../context/AppContext';
 import { Link } from '../router';
 import { VideoCard } from './VideoCard';
+import { FeedMove, nextMove, prevMove } from '../lib/feedNavigation';
 
 const MIN_SWIPE_DISTANCE = 50;
 
@@ -32,15 +33,17 @@ export const VideoFeed: React.FC = () => {
     setIsPointStoreOpen,
   } = useApp();
 
-  const isLast = currentVideoIndex >= videos.length - 1;
+  // 前後移動のルール（端でのループなど）は lib/feedNavigation.ts にまとめている
+  const position = { index: currentVideoIndex, count: videos.length, hasMore: hasMoreVideos };
+  const next = nextMove(position);
+  const prev = prevMove(position);
 
-  const goToNext = () => {
-    if (!isLast) setCurrentVideoIndex(currentVideoIndex + 1);
+  const apply = (move: FeedMove) => {
+    if (move.type === 'go') setCurrentVideoIndex(move.index);
+    else if (move.type === 'loadMore') void loadMoreVideos();
   };
-
-  const goToPrev = () => {
-    if (currentVideoIndex > 0) setCurrentVideoIndex(currentVideoIndex - 1);
-  };
+  const goToNext = () => apply(next);
+  const goToPrev = () => apply(prev);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -55,9 +58,9 @@ export const VideoFeed: React.FC = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-    // goToNext/goToPrev は currentVideoIndex と videos.length にのみ依存する
+    // goToNext/goToPrev は currentVideoIndex・videos.length・hasMoreVideos にのみ依存する
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentVideoIndex, videos.length]);
+  }, [currentVideoIndex, videos.length, hasMoreVideos]);
 
   const touchStartY = useRef(0);
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -124,15 +127,15 @@ export const VideoFeed: React.FC = () => {
         <div className="hidden sm:flex flex-col gap-2.5 absolute right-6 md:right-12 top-1/2 -translate-y-1/2 z-30">
           <button
             onClick={goToPrev}
-            disabled={currentVideoIndex === 0}
+            disabled={prev.type === 'none'}
             className="w-10 h-10 rounded-lg flex items-center justify-center transition-all shadow-md bg-slate-900 text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-700 active:scale-95 disabled:bg-slate-900/40 disabled:text-slate-600 disabled:border-slate-800/40 disabled:cursor-not-allowed"
             title="前の動画 (↑キー)"
           >
             <ChevronUp className="w-5 h-5" />
           </button>
           <button
-            onClick={() => (isLast && hasMoreVideos ? void loadMoreVideos() : goToNext())}
-            disabled={isLast && !hasMoreVideos}
+            onClick={goToNext}
+            disabled={next.type === 'none'}
             className="w-10 h-10 rounded-lg flex items-center justify-center transition-all shadow-md bg-slate-900 text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-700 active:scale-95 disabled:bg-slate-900/40 disabled:text-slate-600 disabled:border-slate-800/40 disabled:cursor-not-allowed"
             title="次の動画 (↓キー)"
           >
